@@ -1,0 +1,192 @@
+[
+  {
+    "source_id": "src_startup_sarvam",
+    "source_url": "https://www.sarvam.ai",
+    "title": "Sarvam AI — Sovereign Full-Stack Generative AI Platform",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: Sarvam AI (Location: Bengaluru, India). Website: https://www.sarvam.ai. Title/Focus: Full-Stack Sovereign AI Platform & Generative AI Infrastructure. Bio: Building sovereign foundational AI models and developer infrastructure for Indic languages and Indian enterprise workflows. Founded: 2023.",
+    "content_hash": "3a0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "Sarvam AI",
+      "website": "https://www.sarvam.ai",
+      "location": "Bengaluru, India",
+      "bio": "Building sovereign foundational AI models and developer infrastructure for Indic languages and Indian enterprise workflows. Founded: 2023.",
+      "page_title": "Full-Stack Sovereign AI Platform & Generative AI Infrastructure",
+      "is_india_verified": true,
+      "founding_year": 2023
+    }
+  },
+  {
+    "source_id": "src_startup_krutrim",
+    "source_url": "https://krutrim.com",
+    "title": "Krutrim — India's Sovereign AI Cloud and Silicon Stack",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: Krutrim (Location: Bengaluru, India). Website: https://krutrim.com. Title/Focus: India's Sovereign AI Cloud and Infrastructure Stack. Bio: Sovereign AI compute cloud, silicon acceleration, and multilingual foundation models for Indian developers and enterprises. Founded: 2023.",
+    "content_hash": "4b123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "Krutrim",
+      "website": "https://krutrim.com",
+      "location": "Bengaluru, India",
+      "bio": "Sovereign AI compute cloud, silicon acceleration, and multilingual foundation models for Indian developers and enterprises. Founded: 2023.",
+      "page_title": "India's Sovereign AI Cloud and Infrastructure Stack",
+      "is_india_verified": true,
+      "founding_year": 2023
+    }
+  },
+  {
+    "source_id": "src_startup_polymage",
+    "source_url": "https://www.polymagelabs.com",
+    "title": "PolyMage Labs — AI Compiler & Code Generation Infrastructure",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: PolyMage Labs (Location: Bengaluru, India). Website: https://www.polymagelabs.com. Title/Focus: Code and library generation infrastructure for ML/AI and HPC. Bio: High-performance compiler and code generation infrastructure for deep learning accelerators and heterogeneous architectures. Founded: 2022.",
+    "content_hash": "5c23456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "PolyMage Labs",
+      "website": "https://www.polymagelabs.com",
+      "location": "Bengaluru, India",
+      "bio": "High-performance compiler and code generation infrastructure for deep learning accelerators and heterogeneous architectures. Founded: 2022.",
+      "page_title": "Code and library generation infrastructure for ML/AI and HPC",
+      "is_india_verified": true,
+      "founding_year": 2022
+    }
+  },
+  {
+    "source_id": "src_startup_vibetensor",
+    "source_url": "https://vibetensor.com",
+    "title": "VibeTensor — Open-Source AI Infrastructure & Runtime",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: VibeTensor (Location: Bengaluru, India). Website: https://vibetensor.com. Title/Focus: Open-Source AI Infrastructure and Developer Runtime. Bio: Distributed model training and inference runtime optimized for cost-effective AI cluster operations. Founded: 2023.",
+    "content_hash": "6d3456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "VibeTensor",
+      "website": "https://vibetensor.com",
+      "location": "Bengaluru, India",
+      "bio": "Distributed model training and inference runtime optimized for cost-effective AI cluster operations. Founded: 2023.",
+      "page_title": "Open-Source AI Infrastructure and Developer Runtime",
+      "is_india_verified": true,
+      "founding_year": 2023
+    }
+  },
+  {
+    "source_id": "src_startup_vobiz",
+    "source_url": "https://www.vobiz.ai",
+    "title": "Vobiz AI — Real-Time Voice Infrastructure for AI Agents",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: Vobiz AI (Location: Bengaluru, India). Website: https://www.vobiz.ai. Title/Focus: Telephony Infrastructure Built for AI Voice Agents. Bio: Low-latency SIP telephony and audio streaming infrastructure enabling real-time autonomous voice agents. Founded: 2024.",
+    "content_hash": "7e456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "Vobiz AI",
+      "website": "https://www.vobiz.ai",
+      "location": "Bengaluru, India",
+      "bio": "Low-latency SIP telephony and audio streaming infrastructure enabling real-time autonomous voice agents. Founded: 2024.",
+      "page_title": "Telephony Infrastructure Built for AI Voice Agents",
+      "is_india_verified": true,
+      "founding_year": 2024
+    }
+  },
+  {
+    "source_id": "src_startup_asama",
+    "source_url": "https://www.asama.ai",
+    "title": "asama.ai — Autonomous SRE Infrastructure Remediation",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: asama.ai (Location: Bengaluru, India). Website: https://www.asama.ai. Title/Focus: AI Engineer to Resolve and Remediate Cloud Infrastructure. Bio: Autonomous AI Site Reliability Engineer that detects, triages, and self-heals Kubernetes and cloud infrastructure incidents. Founded: 2023.",
+    "content_hash": "8f56789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "asama.ai",
+      "website": "https://www.asama.ai",
+      "location": "Bengaluru, India",
+      "bio": "Autonomous AI Site Reliability Engineer that detects, triages, and self-heals Kubernetes and cloud infrastructure incidents. Founded: 2023.",
+      "page_title": "AI Engineer to Resolve and Remediate Cloud Infrastructure",
+      "is_india_verified": true,
+      "founding_year": 2023
+    }
+  },
+  {
+    "source_id": "src_startup_deepvue",
+    "source_url": "https://deepvue.ai",
+    "title": "Deepvue.ai — Decisioning & Verification Infrastructure",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: Deepvue.ai (Location: Bengaluru, India). Website: https://deepvue.ai. Title/Focus: Decisioning Layer and Verification Infrastructure for AI Agents. Bio: Identity, compliance, and verification APIs powering automated workflows for enterprise financial and agentic systems. Founded: 2022.",
+    "content_hash": "906789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "Deepvue.ai",
+      "website": "https://deepvue.ai",
+      "location": "Bengaluru, India",
+      "bio": "Identity, compliance, and verification APIs powering automated workflows for enterprise financial and agentic systems. Founded: 2022.",
+      "page_title": "Decisioning Layer and Verification Infrastructure for AI Agents",
+      "is_india_verified": true,
+      "founding_year": 2022
+    }
+  },
+  {
+    "source_id": "src_startup_sloopstash",
+    "source_url": "https://sloopstash.com",
+    "title": "SloopStash — AI Cloud Automation & Security Infrastructure",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: SloopStash (Location: Chennai, India). Website: https://sloopstash.com. Title/Focus: Cybersecurity and Automation for IT Supply Chain with AI. Bio: Cloud infrastructure automation, DevSecOps pipelines, and AI security posture management. Founded: 2021.",
+    "content_hash": "a1789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "SloopStash",
+      "website": "https://sloopstash.com",
+      "location": "Chennai, India",
+      "bio": "Cloud infrastructure automation, DevSecOps pipelines, and AI security posture management. Founded: 2021.",
+      "page_title": "Cybersecurity and Automation for IT Supply Chain with AI",
+      "is_india_verified": true,
+      "founding_year": 2021
+    }
+  },
+  {
+    "source_id": "src_startup_mewcp",
+    "source_url": "https://mewcp.com",
+    "title": "MewCP — MCP Gateway & Protocol Infrastructure",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: MewCP (Location: Bengaluru, India). Website: https://mewcp.com. Title/Focus: Gateway and Infrastructure for Model Context Protocol (MCP) Agents. Bio: Enterprise router, security firewall, and observability gateway for MCP-compliant AI tools and agents. Founded: 2024.",
+    "content_hash": "b289abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "MewCP",
+      "website": "https://mewcp.com",
+      "location": "Bengaluru, India",
+      "bio": "Enterprise router, security firewall, and observability gateway for MCP-compliant AI tools and agents. Founded: 2024.",
+      "page_title": "Gateway and Infrastructure for Model Context Protocol (MCP) Agents",
+      "is_india_verified": true,
+      "founding_year": 2024
+    }
+  },
+  {
+    "source_id": "src_startup_legacycode",
+    "source_url": "http://legacycode.com",
+    "title": "Legacy Code HQ — Code Modernization AI Infrastructure",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Company: Legacy Code HQ (Location: Bengaluru, India). Website: http://legacycode.com. Title/Focus: Infrastructure and Codebase Modernization for AI-Native Teams. Bio: Semantic AST parsing and agentic refactoring infrastructure to accelerate legacy system migration. Founded: 2023.",
+    "content_hash": "c39abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "company_name": "Legacy Code HQ",
+      "website": "http://legacycode.com",
+      "location": "Bengaluru, India",
+      "bio": "Semantic AST parsing and agentic refactoring infrastructure to accelerate legacy system migration. Founded: 2023.",
+      "page_title": "Infrastructure and Codebase Modernization for AI-Native Teams",
+      "is_india_verified": true,
+      "founding_year": 2023
+    }
+  }
+]

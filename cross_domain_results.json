@@ -1,0 +1,410 @@
+{
+  "task_a": {
+    "task_id": "task_f1854d3f3871",
+    "intent": "Find 10 professors researching autonomous systems and embodied AI, with institution, research interests, official profile URL, and evidence.",
+    "duration_seconds": 3.22,
+    "planned_steps": [
+      "research.live_source_acquisition",
+      "research.generalized_extraction",
+      "research.generalized_verification",
+      "data.deduplication"
+    ],
+    "columns": [
+      "name",
+      "institution",
+      "research_interests",
+      "official_profile_url",
+      "evidence",
+      "confidence",
+      "status"
+    ],
+    "records_count": 20,
+    "records": [
+      {
+        "name": "Muhammad Sajid Shafique",
+        "institution": "New York University Abu Dhabi",
+        "research_interests": "Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems",
+        "official_profile_url": "https://openalex.org/A5081407249",
+        "evidence": "Author: Muhammad Sajid Shafique, Institution: New York University Abu Dhabi. Publication: 'Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems' (2025), DOI: https://doi.org/10.1109/socc66126.2025.11235443.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Muhammad Abdullah Hanif",
+        "institution": "New York University Abu Dhabi",
+        "research_interests": "Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems",
+        "official_profile_url": "https://openalex.org/A5100647460",
+        "evidence": "Author: Muhammad Abdullah Hanif, Institution: New York University Abu Dhabi. Publication: 'Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems' (2025), DOI: https://doi.org/10.1109/socc66126.2025.11235443.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Amira Guesmi",
+        "institution": "New York University Abu Dhabi",
+        "research_interests": "Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems",
+        "official_profile_url": "https://openalex.org/A5012650826",
+        "evidence": "Author: Amira Guesmi, Institution: New York University Abu Dhabi. Publication: 'Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems' (2025), DOI: https://doi.org/10.1109/socc66126.2025.11235443.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Nandish Chattopadhyay",
+        "institution": "New York University Abu Dhabi",
+        "research_interests": "Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems",
+        "official_profile_url": "https://openalex.org/A5071802339",
+        "evidence": "Author: Nandish Chattopadhyay, Institution: New York University Abu Dhabi. Publication: 'Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems' (2025), DOI: https://doi.org/10.1109/socc66126.2025.11235443.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Bassem Ouni",
+        "institution": "Technology Innovation Institute",
+        "research_interests": "Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems",
+        "official_profile_url": "https://openalex.org/A5051699271",
+        "evidence": "Author: Bassem Ouni, Institution: Technology Innovation Institute. Publication: 'Adversarial and Backdoor Threats in Autonomous-Vehicle and Embodied-AI Systems' (2025), DOI: https://doi.org/10.1109/socc66126.2025.11235443.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "S. Jagannathan",
+        "institution": "Missouri University of Science and Technology",
+        "research_interests": "Embodied Lifelong Machine Learning/AI for Robotics/Autonomous Systems to Attain Industry 5.0",
+        "official_profile_url": "https://openalex.org/A5002030718",
+        "evidence": "Author: S. Jagannathan, Institution: Missouri University of Science and Technology. Publication: 'Embodied Lifelong Machine Learning/AI for Robotics/Autonomous Systems to Attain Industry 5.0' (2026), DOI: https://doi.org/10.46254/na11.20260417.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Ho Wa Ku",
+        "institution": "Affiliation Unlisted",
+        "research_interests": "Execution Governance for Physical AI: A Structural Control Layer for Embodied Autonomous Systems",
+        "official_profile_url": "https://openalex.org/A5129378848",
+        "evidence": "Author: Ho Wa Ku, Institution: Affiliation Unlisted. Publication: 'Execution Governance for Physical AI: A Structural Control Layer for Embodied Autonomous Systems' (2026), DOI: https://doi.org/10.5281/zenodo.19086122.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Nan Jiang",
+        "institution": "Fudan University",
+        "research_interests": "GALILEO:GALILEO: Recursive Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5159308044",
+        "evidence": "Author: Nan Jiang, Institution: Fudan University. Publication: 'GALILEO:GALILEO: Recursive Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.5281/zenodo.22856478.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Stan Franklin",
+        "institution": "Affiliation Unlisted",
+        "research_interests": "AUTONOMOUS AGENTS AS EMBODIED AI",
+        "official_profile_url": "https://openalex.org/A5048507562",
+        "evidence": "Author: Stan Franklin, Institution: Affiliation Unlisted. Publication: 'AUTONOMOUS AGENTS AS EMBODIED AI' (1997), DOI: https://doi.org/10.1080/019697297126029.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Nan Jiang",
+        "institution": "Shanghai Medical College of Fudan University",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5138494275",
+        "evidence": "Author: Nan Jiang, Institution: Shanghai Medical College of Fudan University. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Rongyuan Wei",
+        "institution": "Shanghai Medical College of Fudan University",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5069862178",
+        "evidence": "Author: Rongyuan Wei, Institution: Shanghai Medical College of Fudan University. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Hao Xiao",
+        "institution": "Shanghai Medical College of Fudan University",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://doi.org/10.64898/2026.06.10.731360",
+        "evidence": "Author: Hao Xiao, Institution: Shanghai Medical College of Fudan University. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Zhenfei Yin",
+        "institution": "University of Oxford",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5063953932",
+        "evidence": "Author: Zhenfei Yin, Institution: University of Oxford. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Xi Wang",
+        "institution": "New York University",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5100442271",
+        "evidence": "Author: Xi Wang, Institution: New York University. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Taoyong Cui",
+        "institution": "Stanford Medicine",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5041810936",
+        "evidence": "Author: Taoyong Cui, Institution: Stanford Medicine. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Ke Shao",
+        "institution": "Shanghai Medical College of Fudan University",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5111789245",
+        "evidence": "Author: Ke Shao, Institution: Shanghai Medical College of Fudan University. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Jian Zhou",
+        "institution": "Shanghai Medical College of Fudan University",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5067593913",
+        "evidence": "Author: Jian Zhou, Institution: Shanghai Medical College of Fudan University. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Jia Fan",
+        "institution": "Shanghai Medical College of Fudan University",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5123730834",
+        "evidence": "Author: Jia Fan, Institution: Shanghai Medical College of Fudan University. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Philip H. S. Torr",
+        "institution": "University of Oxford",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5001534492",
+        "evidence": "Author: Philip H. S. Torr, Institution: University of Oxford. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "name": "Yingcheng Wu",
+        "institution": "Shanghai Medical College of Fudan University",
+        "research_interests": "GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems",
+        "official_profile_url": "https://openalex.org/A5100864921",
+        "evidence": "Author: Yingcheng Wu, Institution: Shanghai Medical College of Fudan University. Publication: 'GALILEO: Embodied AI scientist for autonomous therapeutic discovery in dynamic membrane systems' (2026), DOI: https://doi.org/10.64898/2026.06.10.731360.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      }
+    ],
+    "events_count": 25
+  },
+  "task_b": {
+    "task_id": "task_c2b44eca7206",
+    "intent": "Find 10 startups working on AI infrastructure in India, with company name, product focus, official website, location, and supporting evidence.",
+    "duration_seconds": 24.8,
+    "planned_steps": [
+      "research.live_source_acquisition",
+      "research.generalized_extraction",
+      "research.generalized_verification",
+      "data.deduplication"
+    ],
+    "columns": [
+      "company_name",
+      "product_focus",
+      "official_website",
+      "location",
+      "evidence",
+      "confidence",
+      "status"
+    ],
+    "records_count": 20,
+    "records": [
+      {
+        "company_name": "Vobiz AI",
+        "product_focus": "Telephony Infrastructure for AI Voice Agents | Vobiz",
+        "official_website": "https://www.vobiz.ai/",
+        "location": "India",
+        "evidence": "Company: Vobiz AI (Location: India). Website: https://www.vobiz.ai/. Title/Focus: Telephony Infrastructure for AI Voice Agents | Vobiz. Bio: Telephony infrastructure built for the AI era.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "asama.ai",
+        "product_focus": "Asama AI - Your AI Infrastructure Engineer",
+        "official_website": "https://www.asama.ai",
+        "location": "India",
+        "evidence": "Company: asama.ai (Location: India). Website: https://www.asama.ai. Title/Focus: Asama AI - Your AI Infrastructure Engineer. Bio: Your AI Engineer to Resolve & Remediate Infrastructure issues.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "Legacy Code HQ",
+        "product_focus": "Legacy Code Labs \u2022 A codebase research lab",
+        "official_website": "http://legacycode.com",
+        "location": "India",
+        "evidence": "Company: Legacy Code HQ (Location: India). Website: http://legacycode.com. Title/Focus: Legacy Code Labs \u2022 A codebase research lab. Bio: Infrastructure for AI-Native teams.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "PolyMage Labs",
+        "product_focus": "Home: PolyMage Labs - Compilers for Artificial Intelligence",
+        "official_website": "https://www.polymagelabs.com",
+        "location": "Bengaluru, India",
+        "evidence": "Company: PolyMage Labs (Location: Bengaluru, India). Website: https://www.polymagelabs.com. Title/Focus: Home: PolyMage Labs - Compilers for Artificial Intelligence. Bio: Code and library generation infrastructure for ML/AI and HPC.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "VibeTensor",
+        "product_focus": "VibeTensor - Built to Trust | AI Product Company",
+        "official_website": "https://vibetensor.com",
+        "location": "India",
+        "evidence": "Company: VibeTensor (Location: India). Website: https://vibetensor.com. Title/Focus: VibeTensor - Built to Trust | AI Product Company. Bio: Built to Trust. Open-source AI infrastructure, developer tools, and career intelligence. DPIIT-recognized startup from India..",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "sloopstash",
+        "product_focus": "Cybersecurity and automation for IT supply chain with AI assistance | SloopStash",
+        "official_website": "https://sloopstash.com",
+        "location": "India",
+        "evidence": "Company: sloopstash (Location: India). Website: https://sloopstash.com. Title/Focus: Cybersecurity and automation for IT supply chain with AI assistance | SloopStash. Bio: Develop low-cost software supply chains and IT infrastructure with our products, toolkits, solutions, and training, built for cybersecurity, automation, and AI..",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "AStheTECH",
+        "product_focus": "MewCP: One Gateway for Every Tool Your Agent Needs",
+        "official_website": "https://mewcp.com",
+        "location": "India",
+        "evidence": "Company: AStheTECH (Location: India). Website: https://mewcp.com. Title/Focus: MewCP: One Gateway for Every Tool Your Agent Needs. Bio: Building the future of AI tool integrations, MCP infrastructure, developer platforms, and open-source automation solutions..",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "Deepvue.ai",
+        "product_focus": "Building the Decisioning Layer for AI Agents | Deepvue",
+        "official_website": "https://deepvue.ai",
+        "location": "India",
+        "evidence": "Company: Deepvue.ai (Location: India). Website: https://deepvue.ai. Title/Focus: Building the Decisioning Layer for AI Agents | Deepvue. Bio: Building the decisioning layer for AI agents. Identity, risk, and fraud infrastructure on India Stack..",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "ARASKOVA labs",
+        "product_focus": "Araskova Labs: Sovereign Malayalam AI, Kerala",
+        "official_website": "https://www.araskova.com/",
+        "location": "India",
+        "evidence": "Company: ARASKOVA labs (Location: India). Website: https://www.araskova.com/. Title/Focus: Araskova Labs: Sovereign Malayalam AI, Kerala. Bio: Industrial AI & Computer Vision Systems for Manufacturing, Security and Smart Infrastructure.",
+        "confidence": 1.0,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "siranta-ai",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: siranta-ai (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "aitdcode",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: aitdcode (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "Code-Decoders",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: Code-Decoders (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "Abstraxn-Labs",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: Abstraxn-Labs (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "designlesshq",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: designlesshq (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "Axomiya-AI-Foundry",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: Axomiya-AI-Foundry (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "MandelBrot-AI",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: MandelBrot-AI (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "weaverai-org",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: weaverai-org (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "AION-Analytics-India",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: AION-Analytics-India (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "PodSageAI",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: PodSageAI (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      },
+      {
+        "company_name": "Sievehouse",
+        "product_focus": "AI Technology Organization",
+        "official_website": "",
+        "location": "India",
+        "evidence": "Company: Sievehouse (Location: India). Website: None. Title/Focus: AI Technology Organization. Bio: AI Technology Organization.",
+        "confidence": 0.45,
+        "status": "UNIQUE_VERIFIED"
+      }
+    ],
+    "events_count": 25
+  }
+}

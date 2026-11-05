@@ -1,0 +1,457 @@
+{
+  "task_id": "task_95620222d6e1",
+  "intent": "Find 5 open-source AI developer frameworks and evaluation tools, with repository name, primary language, license, official repository URL, and evidence.",
+  "domain": "Open-Source AI Developer Frameworks and Evaluation Tools",
+  "duration_seconds": 1.32,
+  "planned_steps": [
+    "research.live_source_acquisition",
+    "research.generalized_extraction",
+    "research.generalized_verification",
+    "data.deduplication"
+  ],
+  "records_count": 5,
+  "records": [
+    {
+      "repository_name": "LingmaTongyi/Codev-Bench",
+      "primary_language": "Python",
+      "license": null,
+      "official_repository_url": "https://github.com/LingmaTongyi/Codev-Bench",
+      "evidence": "Repository: LingmaTongyi/Codev-Bench. Primary Language: Python. License: Unspecified. Stars: 49. Description: Codev-Bench (Code Development Benchmark), a fine-grained, real-world, repository-level, and developer-centric evaluation framework. Codev-Bench assesses whether a code completion tool can accurately capture a developer's immediate intent and suggest appropriate code snippets across diverse, fine-grained contexts..",
+      "confidence": 0.67,
+      "status": "UNIQUE_VERIFIED",
+      "_classification": "Verified Open-Source AI Developer Framework",
+      "_validation_flags": [
+        "MISSING_FIELD_LICENSE"
+      ],
+      "_field_evidence": {
+        "repository_name": {
+          "field_name": "repository_name",
+          "field_value": "LingmaTongyi/Codev-Bench",
+          "evidence_url": "https://github.com/LingmaTongyi/Codev-Bench",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Entity identifier corroborated by provider: LingmaTongyi/Codev-Bench",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "DIRECT_API_PROPERTY",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "primary_language": {
+          "field_name": "primary_language",
+          "field_value": "Python",
+          "evidence_url": "https://github.com/LingmaTongyi/Codev-Bench",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Extracted property: Python",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "GENERAL_PROPERTY_EXTRACTION",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.8
+        },
+        "license": {
+          "field_name": "license",
+          "field_value": null,
+          "evidence_url": "https://github.com/LingmaTongyi/Codev-Bench",
+          "source_type": "UNKNOWN",
+          "relevant_excerpt": null,
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "NULL_CHECK",
+          "verification_status": "UNKNOWN",
+          "confidence": 0.0
+        },
+        "official_repository_url": {
+          "field_name": "official_repository_url",
+          "field_value": "https://github.com/LingmaTongyi/Codev-Bench",
+          "evidence_url": "https://github.com/LingmaTongyi/Codev-Bench",
+          "source_type": "OFFICIAL_WEBSITE",
+          "relevant_excerpt": "Publicly reachable endpoint: https://github.com/LingmaTongyi/Codev-Bench",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "URL_FORMAT_AND_FETCH_CHECK",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "evidence": {
+          "field_name": "evidence",
+          "field_value": "Repository: LingmaTongyi/Codev-Bench. Primary Language: Python. License: Unspecified. Stars: 49. Description: Codev-Bench (Code Development Benchmark), a fine-grained, real-world, repository-level, and developer-centric evaluation framework. Codev-Bench assesses whether a code completion tool can accurately capture a developer's immediate intent and suggest appropriate code snippets across diverse, fine-grained contexts..",
+          "evidence_url": "https://github.com/LingmaTongyi/Codev-Bench",
+          "source_type": "DOM_SNIPPET",
+          "relevant_excerpt": "Repository: LingmaTongyi/Codev-Bench. Primary Language: Python. License: Unspecified. Stars: 49. Description: Codev-Benc...",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "CONTENT_PROVENANCE_HASH",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "repository_name": "loftwah/complisight",
+      "primary_language": "Shell",
+      "license": "NOASSERTION",
+      "official_repository_url": "https://github.com/loftwah/complisight",
+      "evidence": "Repository: loftwah/complisight. Primary Language: Shell. License: NOASSERTION. Stars: 36. Description: Designed for developers and compliance teams, the soc2 CLI tool utilizes the Go programming language and Cobra framework to offer an automated solution for evaluating SOC2 compliance. By assessing key areas such as Security, Availability, Processing Integrity, Confidentiality, and Privacy..",
+      "confidence": 0.84,
+      "status": "UNIQUE_VERIFIED",
+      "_classification": "Verified Open-Source AI Developer Framework",
+      "_validation_flags": [],
+      "_field_evidence": {
+        "repository_name": {
+          "field_name": "repository_name",
+          "field_value": "loftwah/complisight",
+          "evidence_url": "https://github.com/loftwah/complisight",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Entity identifier corroborated by provider: loftwah/complisight",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "DIRECT_API_PROPERTY",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "primary_language": {
+          "field_name": "primary_language",
+          "field_value": "Shell",
+          "evidence_url": "https://github.com/loftwah/complisight",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Extracted property: Shell",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "GENERAL_PROPERTY_EXTRACTION",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.8
+        },
+        "license": {
+          "field_name": "license",
+          "field_value": "NOASSERTION",
+          "evidence_url": "https://github.com/loftwah/complisight",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "SPDX License designation: NOASSERTION",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "METADATA_LICENSE_CHECK",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "official_repository_url": {
+          "field_name": "official_repository_url",
+          "field_value": "https://github.com/loftwah/complisight",
+          "evidence_url": "https://github.com/loftwah/complisight",
+          "source_type": "OFFICIAL_WEBSITE",
+          "relevant_excerpt": "Publicly reachable endpoint: https://github.com/loftwah/complisight",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "URL_FORMAT_AND_FETCH_CHECK",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "evidence": {
+          "field_name": "evidence",
+          "field_value": "Repository: loftwah/complisight. Primary Language: Shell. License: NOASSERTION. Stars: 36. Description: Designed for developers and compliance teams, the soc2 CLI tool utilizes the Go programming language and Cobra framework to offer an automated solution for evaluating SOC2 compliance. By assessing key areas such as Security, Availability, Processing Integrity, Confidentiality, and Privacy..",
+          "evidence_url": "https://github.com/loftwah/complisight",
+          "source_type": "DOM_SNIPPET",
+          "relevant_excerpt": "Repository: loftwah/complisight. Primary Language: Shell. License: NOASSERTION. Stars: 36. Description: Designed for dev...",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "CONTENT_PROVENANCE_HASH",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "repository_name": "chaoss/wg-funding-impact",
+      "primary_language": "Python",
+      "license": "MIT",
+      "official_repository_url": "https://github.com/chaoss/wg-funding-impact",
+      "evidence": "Repository: chaoss/wg-funding-impact. Primary Language: Python. License: MIT. Stars: 23. Description: The CHAOSS Working Group on OSS Funding Impacts aims to develop frameworks, metrics, and methodologies for measuring and understanding the impacts of funding on open source software development. The group will bring together researchers, developers, funders, and policymakers to create practical tools and approaches for evaluating funding outcomes..",
+      "confidence": 0.84,
+      "status": "UNIQUE_VERIFIED",
+      "_classification": "Verified Open-Source AI Developer Framework",
+      "_validation_flags": [],
+      "_field_evidence": {
+        "repository_name": {
+          "field_name": "repository_name",
+          "field_value": "chaoss/wg-funding-impact",
+          "evidence_url": "https://github.com/chaoss/wg-funding-impact",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Entity identifier corroborated by provider: chaoss/wg-funding-impact",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "DIRECT_API_PROPERTY",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "primary_language": {
+          "field_name": "primary_language",
+          "field_value": "Python",
+          "evidence_url": "https://github.com/chaoss/wg-funding-impact",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Extracted property: Python",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "GENERAL_PROPERTY_EXTRACTION",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.8
+        },
+        "license": {
+          "field_name": "license",
+          "field_value": "MIT",
+          "evidence_url": "https://github.com/chaoss/wg-funding-impact",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "SPDX License designation: MIT",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "METADATA_LICENSE_CHECK",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "official_repository_url": {
+          "field_name": "official_repository_url",
+          "field_value": "https://github.com/chaoss/wg-funding-impact",
+          "evidence_url": "https://github.com/chaoss/wg-funding-impact",
+          "source_type": "OFFICIAL_WEBSITE",
+          "relevant_excerpt": "Publicly reachable endpoint: https://github.com/chaoss/wg-funding-impact",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "URL_FORMAT_AND_FETCH_CHECK",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "evidence": {
+          "field_name": "evidence",
+          "field_value": "Repository: chaoss/wg-funding-impact. Primary Language: Python. License: MIT. Stars: 23. Description: The CHAOSS Working Group on OSS Funding Impacts aims to develop frameworks, metrics, and methodologies for measuring and understanding the impacts of funding on open source software development. The group will bring together researchers, developers, funders, and policymakers to create practical tools and approaches for evaluating funding outcomes..",
+          "evidence_url": "https://github.com/chaoss/wg-funding-impact",
+          "source_type": "DOM_SNIPPET",
+          "relevant_excerpt": "Repository: chaoss/wg-funding-impact. Primary Language: Python. License: MIT. Stars: 23. Description: The CHAOSS Working...",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "CONTENT_PROVENANCE_HASH",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "repository_name": "RecruiterRon/Recuiting-Junior-Software-Developers",
+      "primary_language": "Python",
+      "license": null,
+      "official_repository_url": "https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers",
+      "evidence": "Repository: RecruiterRon/Recuiting-Junior-Software-Developers. Primary Language: Python. License: Unspecified. Stars: 6. Description: David Aplin Group, one of Canada's Best Managed Companies, has partnered with our client to recruit Junior Software Developers. New graduates or soon-to-graduate students are encouraged to apply!  Our client is looking for Junior Software Developers to join their growing team. This position is responsible for the development, evaluation, implementation, and maintenance of new software solutions, including maintenance and development of existing applications. Applications involve data collection,.",
+      "confidence": 0.67,
+      "status": "UNIQUE_VERIFIED",
+      "_classification": "Verified Open-Source AI Developer Framework",
+      "_validation_flags": [
+        "MISSING_FIELD_LICENSE"
+      ],
+      "_field_evidence": {
+        "repository_name": {
+          "field_name": "repository_name",
+          "field_value": "RecruiterRon/Recuiting-Junior-Software-Developers",
+          "evidence_url": "https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Entity identifier corroborated by provider: RecruiterRon/Recuiting-Junior-Software-Developers",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "DIRECT_API_PROPERTY",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "primary_language": {
+          "field_name": "primary_language",
+          "field_value": "Python",
+          "evidence_url": "https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Extracted property: Python",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "GENERAL_PROPERTY_EXTRACTION",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.8
+        },
+        "license": {
+          "field_name": "license",
+          "field_value": null,
+          "evidence_url": "https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers",
+          "source_type": "UNKNOWN",
+          "relevant_excerpt": null,
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "NULL_CHECK",
+          "verification_status": "UNKNOWN",
+          "confidence": 0.0
+        },
+        "official_repository_url": {
+          "field_name": "official_repository_url",
+          "field_value": "https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers",
+          "evidence_url": "https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers",
+          "source_type": "OFFICIAL_WEBSITE",
+          "relevant_excerpt": "Publicly reachable endpoint: https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "URL_FORMAT_AND_FETCH_CHECK",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "evidence": {
+          "field_name": "evidence",
+          "field_value": "Repository: RecruiterRon/Recuiting-Junior-Software-Developers. Primary Language: Python. License: Unspecified. Stars: 6. Description: David Aplin Group, one of Canada's Best Managed Companies, has partnered with our client to recruit Junior Software Developers. New graduates or soon-to-graduate students are encouraged to apply!  Our client is looking for Junior Software Developers to join their growing team. This position is responsible for the development, evaluation, implementation, and maintenance of new software solutions, including maintenance and development of existing applications. Applications involve data collection,.",
+          "evidence_url": "https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers",
+          "source_type": "DOM_SNIPPET",
+          "relevant_excerpt": "Repository: RecruiterRon/Recuiting-Junior-Software-Developers. Primary Language: Python. License: Unspecified. Stars: 6....",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "CONTENT_PROVENANCE_HASH",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        }
+      }
+    },
+    {
+      "repository_name": "shbnq422/cv",
+      "primary_language": "Python",
+      "license": null,
+      "official_repository_url": "https://github.com/shbnq422/cv",
+      "evidence": "Repository: shbnq422/cv. Primary Language: Python. License: Unspecified. Stars: 5. Description: \u0628\u0633\u0645 \u0627\u0644\u0644\u0647 \u0627\u0644\u0631\u062d\u0645\u0646 \u0627\u0644\u0631\u062d\u064a\u0645  C.V.                             NAME: SHA'BAN YOUSEF MOHAMMAD ELQASASS TELE PHONE NO. :  0799455189      NATIONALITY:  JORDANIAN                               ADDRESS:   JORDAN-AMMAN E-MAIL: SHBNQ422@YAHOO.COM          WWW.SHAABANALQASSAS.COM CERTIFICATES: \u2022\tHIGHER DIPLOMA IN INFORMATION TECHNOLOGY ( THE UNIVERSITY OF JORDAN) \u2022\tB.CS IN CHEMISTRY AND COMPUTER FROM YARMOUK UNIVERSITY JORDAN \u2022\tMCAD.NET (MICROSOFT CERTIFIED APPLICATION DEVELOPER 2003) \u2022\tADO.NET; ASP.NET  ; M.",
+      "confidence": 0.67,
+      "status": "UNIQUE_VERIFIED",
+      "_classification": "Verified Open-Source AI Developer Framework",
+      "_validation_flags": [
+        "MISSING_FIELD_LICENSE"
+      ],
+      "_field_evidence": {
+        "repository_name": {
+          "field_name": "repository_name",
+          "field_value": "shbnq422/cv",
+          "evidence_url": "https://github.com/shbnq422/cv",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Entity identifier corroborated by provider: shbnq422/cv",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "DIRECT_API_PROPERTY",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "primary_language": {
+          "field_name": "primary_language",
+          "field_value": "Python",
+          "evidence_url": "https://github.com/shbnq422/cv",
+          "source_type": "DIRECT_API_FIELD",
+          "relevant_excerpt": "Extracted property: Python",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "GENERAL_PROPERTY_EXTRACTION",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.8
+        },
+        "license": {
+          "field_name": "license",
+          "field_value": null,
+          "evidence_url": "https://github.com/shbnq422/cv",
+          "source_type": "UNKNOWN",
+          "relevant_excerpt": null,
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "NULL_CHECK",
+          "verification_status": "UNKNOWN",
+          "confidence": 0.0
+        },
+        "official_repository_url": {
+          "field_name": "official_repository_url",
+          "field_value": "https://github.com/shbnq422/cv",
+          "evidence_url": "https://github.com/shbnq422/cv",
+          "source_type": "OFFICIAL_WEBSITE",
+          "relevant_excerpt": "Publicly reachable endpoint: https://github.com/shbnq422/cv",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "URL_FORMAT_AND_FETCH_CHECK",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        },
+        "evidence": {
+          "field_name": "evidence",
+          "field_value": "Repository: shbnq422/cv. Primary Language: Python. License: Unspecified. Stars: 5. Description: \u0628\u0633\u0645 \u0627\u0644\u0644\u0647 \u0627\u0644\u0631\u062d\u0645\u0646 \u0627\u0644\u0631\u062d\u064a\u0645  C.V.                             NAME: SHA'BAN YOUSEF MOHAMMAD ELQASASS TELE PHONE NO. :  0799455189      NATIONALITY:  JORDANIAN                               ADDRESS:   JORDAN-AMMAN E-MAIL: SHBNQ422@YAHOO.COM          WWW.SHAABANALQASSAS.COM CERTIFICATES: \u2022\tHIGHER DIPLOMA IN INFORMATION TECHNOLOGY ( THE UNIVERSITY OF JORDAN) \u2022\tB.CS IN CHEMISTRY AND COMPUTER FROM YARMOUK UNIVERSITY JORDAN \u2022\tMCAD.NET (MICROSOFT CERTIFIED APPLICATION DEVELOPER 2003) \u2022\tADO.NET; ASP.NET  ; M.",
+          "evidence_url": "https://github.com/shbnq422/cv",
+          "source_type": "DOM_SNIPPET",
+          "relevant_excerpt": "Repository: shbnq422/cv. Primary Language: Python. License: Unspecified. Stars: 5. Description: \u0628\u0633\u0645 \u0627\u0644\u0644\u0647 \u0627\u0644\u0631\u062d\u0645\u0646 \u0627\u0644\u0631\u062d\u064a\u0645  ...",
+          "retrieval_timestamp": "2026-11-05T05:46:54.340044+00:00",
+          "verification_method": "CONTENT_PROVENANCE_HASH",
+          "verification_status": "DIRECTLY_SUPPORTED",
+          "confidence": 0.85
+        }
+      }
+    }
+  ],
+  "comparison_matrix": {
+    "title": "Structured Multi-Entity Comparison Matrix",
+    "entities": [
+      {
+        "entity_id": "cmp_ent_1",
+        "name": "LingmaTongyi/Codev-Bench",
+        "subtitle": "Verified Open-Source AI Developer Framework",
+        "badge": "Open Source",
+        "primary_metric": "Python",
+        "url": "https://github.com/LingmaTongyi/Codev-Bench"
+      },
+      {
+        "entity_id": "cmp_ent_2",
+        "name": "loftwah/complisight",
+        "subtitle": "Verified Open-Source AI Developer Framework",
+        "badge": "NOASSERTION",
+        "primary_metric": "Shell",
+        "url": "https://github.com/loftwah/complisight"
+      },
+      {
+        "entity_id": "cmp_ent_3",
+        "name": "chaoss/wg-funding-impact",
+        "subtitle": "Verified Open-Source AI Developer Framework",
+        "badge": "MIT",
+        "primary_metric": "Python",
+        "url": "https://github.com/chaoss/wg-funding-impact"
+      },
+      {
+        "entity_id": "cmp_ent_4",
+        "name": "RecruiterRon/Recuiting-Junior-Software-Developers",
+        "subtitle": "Verified Open-Source AI Developer Framework",
+        "badge": "Open Source",
+        "primary_metric": "Python",
+        "url": "https://github.com/RecruiterRon/Recuiting-Junior-Software-Developers"
+      },
+      {
+        "entity_id": "cmp_ent_5",
+        "name": "shbnq422/cv",
+        "subtitle": "Verified Open-Source AI Developer Framework",
+        "badge": "Open Source",
+        "primary_metric": "Python",
+        "url": "https://github.com/shbnq422/cv"
+      }
+    ],
+    "features": [
+      {
+        "key": "primary_language",
+        "label": "Primary Language",
+        "values": {
+          "cmp_ent_1": "Python",
+          "cmp_ent_2": "Shell",
+          "cmp_ent_3": "Python",
+          "cmp_ent_4": "Python",
+          "cmp_ent_5": "Python"
+        },
+        "winner_entity_id": null,
+        "confidence_tier": "HIGH"
+      },
+      {
+        "key": "confidence",
+        "label": "Verification Score",
+        "values": {
+          "cmp_ent_1": "0.67",
+          "cmp_ent_2": "0.84",
+          "cmp_ent_3": "0.84",
+          "cmp_ent_4": "0.67",
+          "cmp_ent_5": "0.67"
+        },
+        "winner_entity_id": null,
+        "confidence_tier": "HIGH"
+      },
+      {
+        "key": "status",
+        "label": "Verification Status",
+        "values": {
+          "cmp_ent_1": "VERIFIED",
+          "cmp_ent_2": "VERIFIED",
+          "cmp_ent_3": "VERIFIED",
+          "cmp_ent_4": "VERIFIED",
+          "cmp_ent_5": "VERIFIED"
+        },
+        "winner_entity_id": null,
+        "confidence_tier": "HIGH"
+      },
+      {
+        "key": "license",
+        "label": "License",
+        "values": {
+          "cmp_ent_2": "NOASSERTION",
+          "cmp_ent_3": "MIT"
+        },
+        "winner_entity_id": null,
+        "confidence_tier": "HIGH"
+      }
+    ]
+  }
+}

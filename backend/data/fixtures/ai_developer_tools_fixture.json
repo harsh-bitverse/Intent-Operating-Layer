@@ -1,0 +1,192 @@
+[
+  {
+    "source_id": "src_tool_vllm",
+    "source_url": "https://github.com/vllm-project/vllm",
+    "title": "vllm-project/vllm — High-throughput and memory-efficient LLM serving engine",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: vllm-project/vllm. Primary Language: Python. License: Apache-2.0. Stars: 39500. Description: High-throughput and memory-efficient LLM serving engine with PagedAttention algorithm.",
+    "content_hash": "d4a123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "vllm-project/vllm",
+      "name": "vLLM",
+      "primary_language": "Python",
+      "license": "Apache-2.0",
+      "official_repository_url": "https://github.com/vllm-project/vllm",
+      "description": "High-throughput and memory-efficient LLM serving engine with PagedAttention algorithm.",
+      "stars": 39500
+    }
+  },
+  {
+    "source_id": "src_tool_dspy",
+    "source_url": "https://github.com/stanfordnlp/dspy",
+    "title": "stanfordnlp/dspy — Programming rather than prompting language models",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: stanfordnlp/dspy. Primary Language: Python. License: MIT. Stars: 23500. Description: Framework for programming—rather than prompting—foundation models and language models.",
+    "content_hash": "e5b23456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "stanfordnlp/dspy",
+      "name": "DSPy",
+      "primary_language": "Python",
+      "license": "MIT",
+      "official_repository_url": "https://github.com/stanfordnlp/dspy",
+      "description": "Framework for programming—rather than prompting—foundation models and language models.",
+      "stars": 23500
+    }
+  },
+  {
+    "source_id": "src_tool_langchain",
+    "source_url": "https://github.com/langchain-ai/langchain",
+    "title": "langchain-ai/langchain — Building applications with LLMs through composability",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: langchain-ai/langchain. Primary Language: Python. License: MIT. Stars: 98500. Description: Building applications with LLMs through composability, agent orchestration, and tool integration.",
+    "content_hash": "f6c3456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "langchain-ai/langchain",
+      "name": "LangChain",
+      "primary_language": "Python",
+      "license": "MIT",
+      "official_repository_url": "https://github.com/langchain-ai/langchain",
+      "description": "Building applications with LLMs through composability, agent orchestration, and tool integration.",
+      "stars": 98500
+    }
+  },
+  {
+    "source_id": "src_tool_llamaindex",
+    "source_url": "https://github.com/run-llama/llama_index",
+    "title": "run-llama/llama_index — Data framework for LLM-based agent applications",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: run-llama/llama_index. Primary Language: Python. License: MIT. Stars: 39200. Description: Data framework for LLM-based agent applications and contextual RAG pipelines.",
+    "content_hash": "07d456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "run-llama/llama_index",
+      "name": "LlamaIndex",
+      "primary_language": "Python",
+      "license": "MIT",
+      "official_repository_url": "https://github.com/run-llama/llama_index",
+      "description": "Data framework for LLM-based agent applications and contextual RAG pipelines.",
+      "stars": 39200
+    }
+  },
+  {
+    "source_id": "src_tool_deepeval",
+    "source_url": "https://github.com/confident-ai/deepeval",
+    "title": "confident-ai/deepeval — The Open-Source LLM Evaluation Framework",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: confident-ai/deepeval. Primary Language: Python. License: Apache-2.0. Stars: 6400. Description: The open-source LLM evaluation framework like Pytest for LLM applications and RAG testing.",
+    "content_hash": "18e56789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "confident-ai/deepeval",
+      "name": "DeepEval",
+      "primary_language": "Python",
+      "license": "Apache-2.0",
+      "official_repository_url": "https://github.com/confident-ai/deepeval",
+      "description": "The open-source LLM evaluation framework like Pytest for LLM applications and RAG testing.",
+      "stars": 6400
+    }
+  },
+  {
+    "source_id": "src_tool_ragas",
+    "source_url": "https://github.com/explodinggradients/ragas",
+    "title": "explodinggradients/ragas — Evaluation framework for RAG pipelines",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: explodinggradients/ragas. Primary Language: Python. License: Apache-2.0. Stars: 9200. Description: Framework for evaluating Retrieval Augmented Generation (RAG) pipelines and LLM systems.",
+    "content_hash": "29f6789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "explodinggradients/ragas",
+      "name": "Ragas",
+      "primary_language": "Python",
+      "license": "Apache-2.0",
+      "official_repository_url": "https://github.com/explodinggradients/ragas",
+      "description": "Framework for evaluating Retrieval Augmented Generation (RAG) pipelines and LLM systems.",
+      "stars": 9200
+    }
+  },
+  {
+    "source_id": "src_tool_promptfoo",
+    "source_url": "https://github.com/promptfoo/promptfoo",
+    "title": "promptfoo/promptfoo — Test and evaluate LLM output quality",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: promptfoo/promptfoo. Primary Language: TypeScript. License: MIT. Stars: 7100. Description: Test-driven framework and CLI for evaluating LLM prompt quality, security, and hallucinations.",
+    "content_hash": "3a0789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "promptfoo/promptfoo",
+      "name": "Promptfoo",
+      "primary_language": "TypeScript",
+      "license": "MIT",
+      "official_repository_url": "https://github.com/promptfoo/promptfoo",
+      "description": "Test-driven framework and CLI for evaluating LLM prompt quality, security, and hallucinations.",
+      "stars": 7100
+    }
+  },
+  {
+    "source_id": "src_tool_phoenix",
+    "source_url": "https://github.com/Arize-ai/phoenix",
+    "title": "Arize-ai/phoenix — AI Observability & Evaluation Platform",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: Arize-ai/phoenix. Primary Language: Python. License: Elastic-2.0. Stars: 6100. Description: AI observability, tracing, and evaluation platform for LLM applications and agent pipelines.",
+    "content_hash": "4b189abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "Arize-ai/phoenix",
+      "name": "Phoenix",
+      "primary_language": "Python",
+      "license": "Elastic-2.0",
+      "official_repository_url": "https://github.com/Arize-ai/phoenix",
+      "description": "AI observability, tracing, and evaluation platform for LLM applications and agent pipelines.",
+      "stars": 6100
+    }
+  },
+  {
+    "source_id": "src_tool_cleanlab",
+    "source_url": "https://github.com/cleanlab/cleanlab",
+    "title": "cleanlab/cleanlab — Data-Centric AI Package for LLM and Data Evaluation",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: cleanlab/cleanlab. Primary Language: Python. License: AGPL-3.0. Stars: 9400. Description: Standard data-centric AI package for data quality, LLM hallucination benchmarking, and dataset curation.",
+    "content_hash": "5c290abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "cleanlab/cleanlab",
+      "name": "Cleanlab",
+      "primary_language": "Python",
+      "license": "AGPL-3.0",
+      "official_repository_url": "https://github.com/cleanlab/cleanlab",
+      "description": "Standard data-centric AI package for data quality, LLM hallucination benchmarking, and dataset curation.",
+      "stars": 9400
+    }
+  },
+  {
+    "source_id": "src_tool_instructor",
+    "source_url": "https://github.com/jxnl/instructor",
+    "title": "jxnl/instructor — Structured Outputs and Validation for LLMs",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Repository: jxnl/instructor. Primary Language: Python. License: MIT. Stars: 11000. Description: Structured outputs and Pydantic validation library for LLMs and agent tooling.",
+    "content_hash": "6d301abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345678",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "repository_name": "jxnl/instructor",
+      "name": "Instructor",
+      "primary_language": "Python",
+      "license": "MIT",
+      "official_repository_url": "https://github.com/jxnl/instructor",
+      "description": "Structured outputs and Pydantic validation library for LLMs and agent tooling.",
+      "stars": 11000
+    }
+  }
+]

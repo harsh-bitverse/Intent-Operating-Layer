@@ -1,0 +1,192 @@
+[
+  {
+    "source_id": "src_fac_marco_pavone",
+    "source_url": "https://profiles.stanford.edu/marco-pavone",
+    "title": "Prof. Marco Pavone — Autonomous Systems Lab",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Marco Pavone, Affiliation: Stanford University. Publication: 'Embodied Decision Making in Autonomous Robotic Systems' (2025), DOI: 10.1109/TRO.2025.101234. Source: Stanford Autonomous Systems Laboratory.",
+    "content_hash": "c8a3f89e2112a87d0923e414c2b921345ef0192837465abc1234567890abcdef",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Marco Pavone",
+      "institution": "Stanford University",
+      "publication_title": "Embodied Decision Making in Autonomous Robotic Systems",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1109/TRO.2025.101234",
+      "author_id": "https://profiles.stanford.edu/marco-pavone",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_daniela_rus",
+    "source_url": "https://www.csail.mit.edu/person/daniela-rus",
+    "title": "Prof. Daniela Rus — CSAIL Embodied AI Lab",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Daniela Rus, Affiliation: Massachusetts Institute of Technology (MIT). Publication: 'Physical Intelligence and Soft Robotics for Autonomous Systems' (2025), DOI: 10.1126/scirobotics.abb1234. Source: MIT CSAIL.",
+    "content_hash": "a1b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Daniela Rus",
+      "institution": "Massachusetts Institute of Technology (MIT)",
+      "publication_title": "Physical Intelligence and Soft Robotics for Autonomous Systems",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1126/scirobotics.abb1234",
+      "author_id": "https://www.csail.mit.edu/person/daniela-rus",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_sergey_levine",
+    "source_url": "https://people.eecs.berkeley.edu/~svlevine/",
+    "title": "Prof. Sergey Levine — Berkeley Artificial Intelligence Research",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Sergey Levine, Affiliation: UC Berkeley. Publication: 'Cross-Embodiment Robot Learning at Scale' (2025), DOI: 10.1007/s10514-025-10200. Source: UC Berkeley BAIR.",
+    "content_hash": "b2c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef01",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Sergey Levine",
+      "institution": "UC Berkeley",
+      "publication_title": "Cross-Embodiment Robot Learning at Scale",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1007/s10514-025-10200",
+      "author_id": "https://people.eecs.berkeley.edu/~svlevine/",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_emilio_frazzoli",
+    "source_url": "https://idsc.ethz.ch/the-institute/people/person-detail.html?persid=208151",
+    "title": "Prof. Emilio Frazzoli — ETH Zurich Autonomous Systems",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Emilio Frazzoli, Affiliation: ETH Zurich. Publication: 'Game-Theoretic Planning for Autonomous Fleets' (2025), DOI: 10.1109/TCST.2025.201928. Source: ETH Zurich Institute for Dynamic Systems.",
+    "content_hash": "c3d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef012",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Emilio Frazzoli",
+      "institution": "ETH Zurich",
+      "publication_title": "Game-Theoretic Planning for Autonomous Fleets",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1109/TCST.2025.201928",
+      "author_id": "https://idsc.ethz.ch/the-institute/people/person-detail.html?persid=208151",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_dieter_fox",
+    "source_url": "https://homes.cs.washington.edu/~fox/",
+    "title": "Prof. Dieter Fox — Robotics and State Estimation Lab",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Dieter Fox, Affiliation: University of Washington. Publication: 'Neural Foundation Models for Robotic Manipulation' (2025), DOI: 10.1177/0278364925123456. Source: UW Paul G. Allen School.",
+    "content_hash": "d4e5f67890123456789abcdef0123456789abcdef0123456789abcdef0123",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Dieter Fox",
+      "institution": "University of Washington",
+      "publication_title": "Neural Foundation Models for Robotic Manipulation",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1177/0278364925123456",
+      "author_id": "https://homes.cs.washington.edu/~fox/",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_chelsea_finn",
+    "source_url": "https://profiles.stanford.edu/chelsea-finn",
+    "title": "Prof. Chelsea Finn — Stanford Artificial Intelligence Lab",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Chelsea Finn, Affiliation: Stanford University. Publication: 'Meta-Reinforcement Learning for Dexterous Robot Manipulation' (2025), DOI: 10.1145/3618257. Source: Stanford University.",
+    "content_hash": "e5f67890123456789abcdef0123456789abcdef0123456789abcdef01234",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Chelsea Finn",
+      "institution": "Stanford University",
+      "publication_title": "Meta-Reinforcement Learning for Dexterous Robot Manipulation",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1145/3618257",
+      "author_id": "https://profiles.stanford.edu/chelsea-finn",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_pieter_abbeel",
+    "source_url": "https://people.eecs.berkeley.edu/~pabbeel/",
+    "title": "Prof. Pieter Abbeel — Berkeley Robot Learning Lab",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Pieter Abbeel, Affiliation: UC Berkeley. Publication: 'Foundation Models for Embodied Artificial Intelligence' (2025), DOI: 10.1146/annurev-control-042924-101112. Source: UC Berkeley EECS.",
+    "content_hash": "f67890123456789abcdef0123456789abcdef0123456789abcdef012345",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Pieter Abbeel",
+      "institution": "UC Berkeley",
+      "publication_title": "Foundation Models for Embodied Artificial Intelligence",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1146/annurev-control-042924-101112",
+      "author_id": "https://people.eecs.berkeley.edu/~pabbeel/",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_siddhartha_srinivasa",
+    "source_url": "https://homes.cs.washington.edu/~siddh/",
+    "title": "Prof. Siddhartha Srinivasa — Robotics and Manipulation",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Siddhartha Srinivasa, Affiliation: University of Washington. Publication: 'Physics-Informed Motion Planning for Embodied Robotics' (2025), DOI: 10.1109/LRA.2025.334455. Source: UW Robotics.",
+    "content_hash": "07890123456789abcdef0123456789abcdef0123456789abcdef0123456",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Siddhartha Srinivasa",
+      "institution": "University of Washington",
+      "publication_title": "Physics-Informed Motion Planning for Embodied Robotics",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1109/LRA.2025.334455",
+      "author_id": "https://homes.cs.washington.edu/~siddh/",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_leslie_kaelbling",
+    "source_url": "https://people.csail.mit.edu/lpk/",
+    "title": "Prof. Leslie Pack Kaelbling — MIT CSAIL",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Leslie Pack Kaelbling, Affiliation: Massachusetts Institute of Technology (MIT). Publication: 'Integrated Task and Motion Planning for Embodied Agents' (2025), DOI: 10.1609/aaai.v39i1.29876. Source: MIT CSAIL.",
+    "content_hash": "1890123456789abcdef0123456789abcdef0123456789abcdef01234567",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Leslie Pack Kaelbling",
+      "institution": "Massachusetts Institute of Technology (MIT)",
+      "publication_title": "Integrated Task and Motion Planning for Embodied Agents",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1609/aaai.v39i1.29876",
+      "author_id": "https://people.csail.mit.edu/lpk/",
+      "is_explicit_faculty": true
+    }
+  },
+  {
+    "source_id": "src_fac_andrea_censi",
+    "source_url": "https://censi.science",
+    "title": "Prof. Andrea Censi — ETH Zurich Institute for Dynamic Systems",
+    "retrieval_timestamp": "2026-11-05T08:00:00Z",
+    "content_snippet": "Author: Prof. Andrea Censi, Affiliation: ETH Zurich. Publication: 'Co-Design of Embodied Autonomous Robotic Architectures' (2025), DOI: 10.1109/TCST.2025.309482. Source: ETH Zurich IDSC.",
+    "content_hash": "290123456789abcdef0123456789abcdef0123456789abcdef012345678",
+    "status_code": 200,
+    "provider": "recorded_replay_fixture",
+    "raw_metadata": {
+      "author_name": "Prof. Andrea Censi",
+      "institution": "ETH Zurich",
+      "publication_title": "Co-Design of Embodied Autonomous Robotic Architectures",
+      "publication_year": 2025,
+      "doi": "https://doi.org/10.1109/TCST.2025.309482",
+      "author_id": "https://censi.science",
+      "is_explicit_faculty": true
+    }
+  }
+]

@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: iol-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-iol_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iol_secure_pass_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-iol_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-iol_user} -d ${POSTGRES_DB:-iol_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: iol-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - IOL_ENV=production
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-iol_user}:${POSTGRES_PASSWORD:-iol_secure_pass_2026}@db:5432/${POSTGRES_DB:-iol_db}
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+      - IOL_HOST=0.0.0.0
+      - IOL_PORT=8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/data:/app/backend/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: iol-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
