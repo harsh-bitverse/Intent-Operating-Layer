@@ -181,6 +181,7 @@ class BackgroundWorker:
                         variant="default",
                         metrics=[
                             CardMetric(label="Status", value="RUNNING"),
+                            CardMetric(label="Execution Mode", value="INITIALIZING"),
                             CardMetric(label="Steps", value=f"0 / {total_steps}"),
                             CardMetric(label="Sources Acquired", value=0),
                             CardMetric(label="Verified Records", value=0)
@@ -379,6 +380,15 @@ class BackgroundWorker:
 
         if cap_id == "research.live_source_acquisition":
             sources = data.get("sources", [])
+            provider_used = data.get("provider_used", "direct_apis")
+            if provider_used == "recorded_replay_fixture":
+                mode_str = "RECORDED REPLAY"
+            elif "+fixture_fallback" in provider_used:
+                mode_str = "FALLBACK REPLAY"
+            else:
+                mode_str = f"LIVE ({provider_used.replace('_', ' ').upper()})"
+
+            self._update_ui_metric(ui_root, "Execution Mode", mode_str)
             self._update_ui_metric(ui_root, "Sources Acquired", len(sources))
 
         elif cap_id in ("research.generalized_extraction", "research.structured_extraction"):

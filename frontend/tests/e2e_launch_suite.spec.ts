@@ -46,7 +46,14 @@ test.describe('Intent Operating Layer - End-to-End Launch Verification', () => {
     await expect(evidencePanel).toBeVisible();
     await expect(evidencePanel.locator('text=Entity Classification:')).toBeVisible();
 
-    // 9. Verify Export functionality triggers without crashing
+    // Verify execution mode is prominently badged (LIVE, REPLAY, or FALLBACK)
+    const modeBadge = page.locator('[data-testid="execution-mode-badge"]');
+    await expect(modeBadge).toBeVisible();
+
+    // Take verified dashboard screenshot
+    await page.screenshot({ path: '../docs/screenshots/dashboard_outcomes.png', fullPage: true });
+
+    // 9. Verify Export functionality triggers and contains verified provenance
     const exportJsonBtn = page.locator('[data-testid="export-json-button"]');
     await expect(exportJsonBtn).toBeVisible();
 
@@ -55,6 +62,17 @@ test.describe('Intent Operating Layer - End-to-End Launch Verification', () => {
     await exportJsonBtn.click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toContain('iol_verified_results_');
+
+    // Validate downloaded payload content
+    const downloadStream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of downloadStream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    const downloadedJson = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+    expect(Array.isArray(downloadedJson)).toBe(true);
+    expect(downloadedJson.length).toBeGreaterThan(0);
+    expect(downloadedJson[0]).toHaveProperty('confidence');
   });
 
   // ---------------------------------------------------------------------------
@@ -77,14 +95,12 @@ test.describe('Intent Operating Layer - End-to-End Launch Verification', () => {
     expect(taskIdMatch).not.toBeNull();
     const taskId = taskIdMatch![0];
 
-    // Simulate closing and reopening tab (reload page)
-    await page.reload();
+    // Simulate closing and reopening tab with direct task_id query parameter
+    await page.goto(`/?task_id=${taskId}`);
     await expect(page.locator('text=Core Online')).toBeVisible({ timeout: 15000 });
 
-    // Re-select the persisted task from list
-    const persistedTaskItem = page.locator(`[data-testid="task-item-${taskId}"]`);
-    await expect(persistedTaskItem).toBeVisible();
-    await persistedTaskItem.click();
+    // Verify task view opened immediately for this taskId
+    await expect(page.locator(`text=${taskId}`).first()).toBeVisible({ timeout: 10000 });
 
     // Switch to SSE event log tab
     await page.click('[data-testid="tab-event-log"]');
@@ -164,6 +180,13 @@ test.describe('Intent Operating Layer - End-to-End Launch Verification', () => {
       data: { reason: 'Unauthorized cancellation attempt' },
     });
     expect(forbiddenCancel.status()).toBe(403);
+
+    // 6. Direct browser deep-link navigation as Tenant Beta -> Access Restricted (403 Forbidden)
+    await page.goto(`/?task_id=${alphaTaskId}`);
+    await expect(page.locator('text=Access Restricted (403 Forbidden)')).toBeVisible({ timeout: 10000 });
+
+    // Capture verified tenant isolation screenshot
+    await page.screenshot({ path: '../docs/screenshots/tenant_isolation_403.png' });
   });
 
   // ---------------------------------------------------------------------------

@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Intent Operating Layer (IOL)",
     description="General-purpose intent-to-outcome execution platform with reusable capability learning",
-    version="0.1.0",
+    version="0.5.0",
     lifespan=lifespan
 )
 
@@ -56,7 +56,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Intent Operating Layer",
-        "version": "0.3.0",
+        "version": "0.5.0-mvp",
         "capabilities_loaded": len(capability_registry.list_capabilities())
     }
 

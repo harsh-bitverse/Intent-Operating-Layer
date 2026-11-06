@@ -23,6 +23,7 @@ export const TaskView: React.FC<TaskViewProps> = ({
   const [isCancelling, setIsCancelling] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [expandedEventId, setExpandedEventId] = useState<number | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const lastEventIdRef = useRef<number | null>(null);
 
@@ -39,6 +40,7 @@ export const TaskView: React.FC<TaskViewProps> = ({
   // 1. Initial Task Fetch
   useEffect(() => {
     let isMounted = true;
+    setAccessDenied(false);
     const fetchTask = async () => {
       try {
         const res = await fetch(`${apiBaseUrl}/api/tasks/${taskId}`, {
@@ -47,7 +49,9 @@ export const TaskView: React.FC<TaskViewProps> = ({
         if (res.ok && isMounted) {
           const data: Task = await res.json();
           setTask(data);
+          setAccessDenied(false);
         } else if (res.status === 403 || res.status === 401) {
+          if (isMounted) setAccessDenied(true);
           console.warn(`Access denied to task ${taskId} for key ${apiKey}`);
         }
       } catch (err) {
@@ -203,6 +207,26 @@ export const TaskView: React.FC<TaskViewProps> = ({
     }
   };
 
+  if (accessDenied) {
+    return (
+      <div className="rounded-2xl border border-red-500/40 bg-red-950/20 p-8 text-center text-sm space-y-3">
+        <span className="text-3xl block">🔒</span>
+        <h3 className="font-semibold text-red-300 text-base">Access Restricted (403 Forbidden)</h3>
+        <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+          Task <code className="text-slate-300 font-mono">{taskId}</code> is protected by tenant authorization boundaries. The active session key does not have permission to inspect this task.
+        </p>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-slate-700 bg-slate-800 px-3.5 py-1.5 text-xs text-slate-300 hover:bg-slate-700 transition-colors"
+          >
+            Dismiss
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (!task) {
     return (
       <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-inner">
@@ -224,6 +248,20 @@ export const TaskView: React.FC<TaskViewProps> = ({
     CANCELLED: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
     PAUSED_FOR_APPROVAL: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
   }[task.status];
+
+  // Extract dynamic execution mode from declarative metric card
+  const executionMode: string | null = (() => {
+    if (!task?.ui_state?.components) return null;
+    for (const comp of task.ui_state.components) {
+      if (comp.id === 'metric_summary' && 'metrics' in comp) {
+        const m = (comp as any).metrics?.find((item: any) => item.label === 'Execution Mode');
+        if (m && m.value && m.value !== 'INITIALIZING') {
+          return String(m.value);
+        }
+      }
+    }
+    return null;
+  })();
 
   // 4. Export Verified Results (JSON / CSV)
   const tableComponent = task?.ui_state?.components.find((c) => c.type === 'table') as any;
@@ -274,6 +312,21 @@ export const TaskView: React.FC<TaskViewProps> = ({
               <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ${statusBadge}`}>
                 {task.status}
               </span>
+              {executionMode && (
+                <span
+                  data-testid="execution-mode-badge"
+                  className={`rounded px-2 py-0.5 text-[11px] font-semibold border ${
+                    executionMode.includes('LIVE')
+                      ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
+                      : executionMode.includes('FALLBACK')
+                      ? 'bg-amber-950/60 text-amber-300 border-amber-500/40'
+                      : 'bg-purple-950/60 text-purple-300 border-purple-500/40'
+                  }`}
+                >
+                  {executionMode.includes('LIVE') ? '⚡ ' : executionMode.includes('FALLBACK') ? '⚠️ ' : '📼 '}
+                  {executionMode}
+                </span>
+              )}
               <span
                 className={`inline-flex items-center space-x-1.5 text-[11px] font-mono ${
                   connectionStatus === 'connected' ? 'text-emerald-400' : 'text-slate-500'

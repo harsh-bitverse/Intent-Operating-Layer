@@ -191,16 +191,15 @@ python -m pytest -v
 
 ## 6. Key Deliverables & Artifact Index
 
-- **`INTENT_SATISFACTION_REPORT.md`**: Phase A report evaluating 20 held-out entities across domains, demonstrating 100% precision and 100% recall, eliminating recruiting/CV false positives, and analyzing the 4-tier verification states.
+- **`SUBMISSION_READY.md`**: Official Engineers' Conclave submission package index, live verification scorecard, and demonstration setup.
+- **`FOUNDER_PITCH.md`**: 60-second elevator pitch, 3-minute interactive demonstration script, system boundary definitions, and jury Q&A.
+- **`RELEASE_VERIFICATION.md`**: Complete release verification audit, 100/100 test pass records, gap closure audit, and release readiness verdict.
+- **`EC_APPLICATION_BRIEF.md`**: Formal Engineers' Conclave application document detailing problem statement, technical innovation, and impact.
+- **`MVP_EVIDENCE.md`**: Empirical evidence report with automated test execution traces, Playwright logs, and 36-case benchmark confusion matrix.
+- **`TECHNICAL_ARCHITECTURE.md`**: In-depth technical architecture specification, Mermaid diagrams, and 11-capability catalog.
+- **`INTENT_SATISFACTION_REPORT.md`**: Phase A report evaluating 36 held-out entities across domains, demonstrating 100% precision and 100% recall, eliminating recruiting/CV false positives, and analyzing the 4-tier verification states.
 - **`SKILL_LEARNING_EXPERIMENT.md`**: Phase C report demonstrating execution trace analysis, parameter sanitization, the 3-stage validation state machine (`CANDIDATE` -> `VALIDATED_FOR_TASK_FAMILY` -> `TRUSTED_FOR_BOUNDED_REUSE`), and warm-start speedups.
-- **`DEMO_RUNBOOK.md`**: Phase E runbook providing exact step-by-step reproduction instructions for all 3 demo scenarios and automated 10-step user journeys.
+- **`DEMO_RUNBOOK.md`**: Complete runbook providing exact step-by-step reproduction instructions for all 3 demo scenarios and automated user journeys.
 - **`EVIDENCE_INTEGRITY_REPORT.md`**: Workstream A audit distinguishing directly supported vs. derived vs. inferred vs. unknown evidence tiers, and conservative confidence calibration.
-- **`THIRD_DOMAIN_TRANSFER_REPORT.md`**: Workstream C & D report detailing transfer to open-source AI developer frameworks and evaluation tools, SPDX license verification, and declarative comparison matrix generation.
-- **`third_domain_results.json`**: Complete structured outcome artifact from the third-domain transfer execution.
-- **`EXECUTION_GAP_ANALYSIS.md`**: Gap analysis detailing the transition to dynamic planning and live external source acquisition.
-- **`RESEARCH_TRANSFER_REPORT.md`**: Cross-domain transfer report across academic professors and Indian startups.
-- **`REPOSITORY_AUDIT.md`**: Comprehensive architectural audit of the Outreach Engine repository.
-- **`backend/iol/api/auth.py`**: Server-derived authentication, multi-tenant isolation, and cross-user task access guard (HTTP 403 Forbidden).
-- **`backend/iol/core/security.py`**: Hardened SSRF boundary blocking loopbacks, IPv6-mapped addresses, private networks, and cloud metadata (`169.254.169.254`) with safe redirect following and streaming size caps.
-- **`frontend/src/components/DeclarativeUIRenderer.tsx`**: Expandable field-level evidence details tray, semantic proof quotes, and multi-entity comparison matrix renderer.
-- **`frontend/src/components/TaskView.tsx`**: Real-time progress bar, SSE reconnection with `Last-Event-ID`, and verified result exports (JSON / CSV).
+- **`THIRD_DOMAIN_TRANSFER_REPORT.md`**: Transfer report to open-source AI developer frameworks and evaluation tools, SPDX license verification, and declarative comparison matrix generation.
+- **`docs/screenshots/`**: Visual evidence gallery captured in real headless Chromium via Playwright (`dashboard_outcomes.png`, `sse_event_stream.png`, `tenant_isolation_403.png`).

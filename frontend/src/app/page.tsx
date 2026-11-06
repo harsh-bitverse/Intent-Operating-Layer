@@ -49,6 +49,30 @@ export default function Home() {
     'X-API-Key': effectiveApiKey,
   });
 
+  // Check URL params on initial load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const qTaskId = urlParams.get('task_id');
+      if (qTaskId) {
+        setActiveTaskId(qTaskId);
+      }
+    }
+  }, []);
+
+  const handleSelectTask = (taskId: string | null) => {
+    setActiveTaskId(taskId);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (taskId) {
+        url.searchParams.set('task_id', taskId);
+      } else {
+        url.searchParams.delete('task_id');
+      }
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
   // 1. Fetch initial tasks and capabilities scoped to authenticated user
   const refreshData = async () => {
     try {
@@ -66,7 +90,13 @@ export default function Home() {
         const data: Task[] = await tasksRes.json();
         setTasks(data);
         if (data.length > 0 && !activeTaskId) {
-          setActiveTaskId(data[0].task_id);
+          const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const qTaskId = urlParams?.get('task_id');
+          if (qTaskId && data.some((t) => t.task_id === qTaskId)) {
+            setActiveTaskId(qTaskId);
+          } else if (!qTaskId) {
+            handleSelectTask(data[0].task_id);
+          }
         } else if (data.length === 0) {
           setActiveTaskId(null);
         }
@@ -111,7 +141,7 @@ export default function Home() {
       if (res.ok) {
         const newTask: Task = await res.json();
         setTasks((prev) => [newTask, ...prev]);
-        setActiveTaskId(newTask.task_id);
+        handleSelectTask(newTask.task_id);
       } else {
         const err = await res.json();
         alert(`Task creation failed: ${err.detail || 'Unauthorized or invalid request'}`);
@@ -136,7 +166,7 @@ export default function Home() {
               <h1 className="text-sm font-bold tracking-tight text-white flex items-center space-x-2">
                 <span>Intent Operating Layer</span>
                 <span className="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] text-blue-400 font-mono border border-blue-500/20">
-                  MVP v0.3.0
+                  MVP v0.5.0
                 </span>
               </h1>
               <p className="text-[11px] text-slate-400 hidden sm:block">General-Purpose Autonomous Execution Platform</p>
@@ -270,7 +300,7 @@ export default function Home() {
                   return (
                     <button
                       key={t.task_id}
-                      onClick={() => setActiveTaskId(t.task_id)}
+                      onClick={() => handleSelectTask(t.task_id)}
                       data-testid={`task-item-${t.task_id}`}
                       className={`w-full text-left rounded-xl border p-4 transition-all duration-150 ${
                         isSelected
@@ -307,7 +337,7 @@ export default function Home() {
                 taskId={activeTaskId}
                 apiKey={effectiveApiKey}
                 apiBaseUrl={API_URL}
-                onClose={() => setActiveTaskId(null)}
+                onClose={() => handleSelectTask(null)}
               />
             ) : (
               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/20 p-12 text-center text-sm text-slate-500 space-y-3">
