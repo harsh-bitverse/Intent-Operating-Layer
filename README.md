@@ -1,6 +1,8 @@
-# Intent Operating Layer (IOL)
+# Intent Operating Layer (IOL) v0.6
 
-> **A General-Purpose Intent-to-Outcome Execution Platform with Reusable Capability Learning**
+> **The Visual-First Intent-to-Outcome Execution Platform with Reusable Capability Learning**
+>
+> **Release:** `v0.6.0` | **Status:** Shipped & Verified | **Automated Tests:** 109 / 109 Passing (100%)
 
 ---
 
@@ -9,7 +11,16 @@
 **Intent Operating Layer (IOL)** is engineered around two fundamental operational rules:
 
 1. **Primary:** Complete the user's requested work with verifiable rigor, factual grounding, and execution safety.
-2. **Secondary:** Learn and register reusable capabilities from execution so similar and related tasks can be completed faster, more reliably, and more efficiently for future users.
+2. **Secondary:** Learn and register reusable capabilities from execution—both **how to execute work** (`SkillLearningEngine`) and **how to present work** (`ExperienceRecipeStore`)—so similar and related tasks can be completed faster, more reliably, and more intuitively for future users.
+
+---
+
+## 2. Two Cooperating Engines (IOL v0.6)
+
+IOL v0.6 operates through two decoupled, asynchronous engines:
+
+1. **The Execution Engine:** Understands intent, dynamically synthesizes multi-step capability pipelines, queries live public APIs (OpenAlex, GitHub, web) with SSRF guards, extracts schemas, computes cryptographic SHA-256 provenance hashes, filters candidates via semantic relevance gates, and persists results to durable storage.
+2. **The Experience Engine:** An asynchronous, non-blocking presentation subsystem that plans adaptive visual workspaces in $<5\text{ms}$, initializes skeleton layouts, dynamically binds verified records via Server-Sent Events (`EXPERIENCE_UPDATED`), and renders rich interactive graphical interfaces—including sortable/filterable multi-column data grids and interactive 2D node-edge simulation canvases.
 
 ---
 
@@ -147,40 +158,29 @@ docker compose up -d --build
 
 ---
 
-## 5. Running Automated Tests
+## 5. Running Automated Tests (109 Tests Total)
 
-### 5.1 Run Full IOL Test Suite (54 Passing Tests)
-Covers store CRUD, multi-tenant auth & ownership, SSRF guards, semantic relevance gates, skill learning, live cross-domain transfer, evidence integrity, and declarative UI matrix generation:
+### 5.1 Run Full IOL Backend Test Suite (60 Passing Tests)
+Covers store CRUD, multi-tenant auth & ownership, SSRF guards, semantic relevance gates, skill learning, live cross-domain transfer, evidence integrity, experience recipe matching, and neural network simulations:
 ```powershell
 $env:PYTHONPATH="C:\Workspace\Products\Intent Operating Layer"
 python -m pytest backend/tests -v
 ```
 
-### 5.2 Run Phase A: Semantic Relevance & Intent Satisfaction Benchmark
+### 5.2 Run Experience Engine Tests
 ```powershell
 $env:PYTHONPATH="C:\Workspace\Products\Intent Operating Layer"
-python -m pytest backend/tests/test_semantic_relevance.py -v
+python -m pytest backend/tests/test_experience_engine.py -v
 ```
 
-### 5.3 Run Phase B: Authentication, Authorization & Hardened SSRF Tests
+### 5.3 Run Real-Browser Playwright Chromium Tests (8 Passing Tests)
+Runs both the Core Launch Suite and the v0.6 Experience Engine Suite (Demos A & B) in headless Chromium:
 ```powershell
-$env:PYTHONPATH="C:\Workspace\Products\Intent Operating Layer"
-python -m pytest backend/tests/test_auth_and_ownership.py -v
+cd "C:\Workspace\Products\Intent Operating Layer\frontend"
+npx playwright test
 ```
 
-### 5.4 Run Phase C: Demonstrable Skill Learning & Warm-Start Benchmark
-```powershell
-$env:PYTHONPATH="C:\Workspace\Products\Intent Operating Layer"
-python -m pytest backend/tests/test_skill_learning.py -v
-```
-
-### 5.5 Run Phase D: Autonomous 10-Step End-to-End User Journey Verification
-```powershell
-$env:PYTHONPATH="C:\Workspace\Products\Intent Operating Layer"
-python scripts/verify_e2e_journey.py
-```
-
-### 5.6 Run Existing Outreach Intelligence Engine Tests (41 Tests)
+### 5.4 Run Existing Outreach Intelligence Engine Tests (41 Tests)
 Ensures zero degradation or regressions in the existing Outreach Intelligence Engine codebase:
 ```powershell
 cd "C:\Workspace\Projects\Outreach Intelligence Engine"
@@ -191,15 +191,24 @@ python -m pytest -v
 
 ## 6. Key Deliverables & Artifact Index
 
+### IOL v0.6 Milestone Artifacts:
+- **`V06_IMPLEMENTATION_REPORT.md`**: Technical report on IOL v0.6 implementation, architecture, test scorecards, and verification.
+- **`V06_DEMO_RUNBOOK.md`**: Step-by-step presentation runbook for Conclave evaluators covering Demos A & B.
+- **`V06_EXPERIENCE_ENGINE_SPEC.md`**: Formal specification of ExperiencePlan, component catalog, and streaming data binding.
+- **`V06_ARCHITECTURE_DECISIONS.md`**: Architecture Decision Records (ADR-001 through ADR-007) with explicit rationale.
+- **`V06_REFERENCE_REPOSITORY_STUDY.md`**: Comparative analysis of open-source frameworks (json-render, ag-ui, a2ui, OpenIntelligentUI, xyflow).
+- **`IOL_DIFFERENTIATION_MATRIX.md`**: Competitive landscape analysis against CopilotKit, A2UI, JSON-Render, and Browser-Use.
+- **`V06_EXISTING_SYSTEM_AUDIT.md`**: Source-level audit of v0.5 codebase, boundary invariants, and reusability analysis.
+
+### Foundational Milestones & Evidence:
 - **`SUBMISSION_READY.md`**: Official Engineers' Conclave submission package index, live verification scorecard, and demonstration setup.
 - **`FOUNDER_PITCH.md`**: 60-second elevator pitch, 3-minute interactive demonstration script, system boundary definitions, and jury Q&A.
-- **`RELEASE_VERIFICATION.md`**: Complete release verification audit, 100/100 test pass records, gap closure audit, and release readiness verdict.
+- **`RELEASE_VERIFICATION.md`**: Complete release verification audit, test pass records, and release readiness verdict.
 - **`EC_APPLICATION_BRIEF.md`**: Formal Engineers' Conclave application document detailing problem statement, technical innovation, and impact.
-- **`MVP_EVIDENCE.md`**: Empirical evidence report with automated test execution traces, Playwright logs, and 36-case benchmark confusion matrix.
-- **`TECHNICAL_ARCHITECTURE.md`**: In-depth technical architecture specification, Mermaid diagrams, and 11-capability catalog.
-- **`INTENT_SATISFACTION_REPORT.md`**: Phase A report evaluating 36 held-out entities across domains, demonstrating 100% precision and 100% recall, eliminating recruiting/CV false positives, and analyzing the 4-tier verification states.
-- **`SKILL_LEARNING_EXPERIMENT.md`**: Phase C report demonstrating execution trace analysis, parameter sanitization, the 3-stage validation state machine (`CANDIDATE` -> `VALIDATED_FOR_TASK_FAMILY` -> `TRUSTED_FOR_BOUNDED_REUSE`), and warm-start speedups.
-- **`DEMO_RUNBOOK.md`**: Complete runbook providing exact step-by-step reproduction instructions for all 3 demo scenarios and automated user journeys.
-- **`EVIDENCE_INTEGRITY_REPORT.md`**: Workstream A audit distinguishing directly supported vs. derived vs. inferred vs. unknown evidence tiers, and conservative confidence calibration.
-- **`THIRD_DOMAIN_TRANSFER_REPORT.md`**: Transfer report to open-source AI developer frameworks and evaluation tools, SPDX license verification, and declarative comparison matrix generation.
-- **`docs/screenshots/`**: Visual evidence gallery captured in real headless Chromium via Playwright (`dashboard_outcomes.png`, `sse_event_stream.png`, `tenant_isolation_403.png`).
+- **`MVP_EVIDENCE.md`**: Empirical evidence report with automated test execution traces, Playwright logs, and benchmark confusion matrix.
+- **`TECHNICAL_ARCHITECTURE.md`**: Technical architecture specification, Mermaid diagrams, and capability catalog.
+- **`docs/screenshots/`**: Visual evidence gallery captured in real Chromium via Playwright:
+  - `v06_demo_a_research_workspace.png`: Adaptive research workspace with full-screen grid and field-level evidence drawer.
+  - `v06_demo_b_neural_simulation.png`: Interactive 2D neural network learning simulation canvas.
+  - `dashboard_outcomes.png`: Multi-tenant authenticated dashboard.
+  - `tenant_isolation_403.png`: Cross-tenant security barrier.

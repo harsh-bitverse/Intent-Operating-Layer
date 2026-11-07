@@ -12,6 +12,7 @@ from backend.iol.api.routes import api_router
 from backend.iol.capabilities.registry import capability_registry
 from backend.iol.adapters.outreach.adapter import register_outreach_capabilities
 from backend.iol.capabilities.live_research import register_live_research_capabilities
+from backend.iol.capabilities.educational import register_educational_capabilities
 from backend.iol.worker.background_worker import background_worker
 
 
@@ -21,6 +22,7 @@ async def lifespan(app: FastAPI):
     # 1. Register reusable capabilities
     register_outreach_capabilities(capability_registry)
     register_live_research_capabilities(capability_registry)
+    register_educational_capabilities(capability_registry)
 
     # 2. Start independent background worker
     background_worker.start()

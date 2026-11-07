@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Task, TaskEvent, TaskStatus } from '../types/iol';
 import { DeclarativeUIRenderer } from './DeclarativeUIRenderer';
+import ExperienceRenderer from './experience/ExperienceRenderer';
 
 interface TaskViewProps {
   taskId: string;
@@ -19,7 +20,8 @@ export const TaskView: React.FC<TaskViewProps> = ({
 }) => {
   const [task, setTask] = useState<Task | null>(null);
   const [events, setEvents] = useState<TaskEvent[]>([]);
-  const [activeTab, setActiveTab] = useState<'ui' | 'events'>('ui');
+  const [activeTab, setActiveTab] = useState<'workspace' | 'ui' | 'events'>('workspace');
+  const [isExperienceFullscreen, setIsExperienceFullscreen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [expandedEventId, setExpandedEventId] = useState<number | null>(null);
@@ -48,6 +50,9 @@ export const TaskView: React.FC<TaskViewProps> = ({
         });
         if (res.ok && isMounted) {
           const data: Task = await res.json();
+          if (!data.experience_plan && data.metadata?.experience_plan) {
+            data.experience_plan = data.metadata.experience_plan;
+          }
           setTask(data);
           setAccessDenied(false);
         } else if (res.status === 403 || res.status === 401) {
@@ -144,7 +149,9 @@ export const TaskView: React.FC<TaskViewProps> = ({
                   return [...prev, parsed];
                 });
 
-                if (eventType === 'UI_UPDATED' && parsed.data) {
+                if (eventType === 'EXPERIENCE_UPDATED' && parsed.data) {
+                  setTask((prev) => (prev ? { ...prev, experience_plan: parsed.data } : prev));
+                } else if (eventType === 'UI_UPDATED' && parsed.data) {
                   setTask((prev) => (prev ? { ...prev, ui_state: parsed.data } : prev));
                 } else if (eventType === 'TASK_COMPLETED') {
                   setTask((prev) => (prev ? { ...prev, status: 'COMPLETED' as TaskStatus } : prev));
@@ -465,11 +472,25 @@ export const TaskView: React.FC<TaskViewProps> = ({
       {/* Tabs */}
       <div className="flex border-b border-slate-800 bg-slate-950/40 px-6">
         <button
+          onClick={() => setActiveTab('workspace')}
+          data-testid="tab-workspace"
+          className={`border-b-2 py-3 px-4 text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
+            activeTab === 'workspace'
+              ? 'border-cyan-500 text-cyan-400 font-bold'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <span>⛶ Adaptive Workspace</span>
+          <span className="rounded bg-cyan-950/80 border border-cyan-800/80 px-1.5 py-0.2 text-[9px] text-cyan-300 font-mono">
+            v0.6
+          </span>
+        </button>
+        <button
           onClick={() => setActiveTab('ui')}
           data-testid="tab-outcomes"
           className={`border-b-2 py-3 px-4 text-xs font-semibold transition-colors ${
             activeTab === 'ui'
-              ? 'border-blue-500 text-blue-400'
+              ? 'border-blue-500 text-blue-400 font-bold'
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -480,7 +501,7 @@ export const TaskView: React.FC<TaskViewProps> = ({
           data-testid="tab-event-log"
           className={`border-b-2 py-3 px-4 text-xs font-semibold transition-colors flex items-center space-x-1.5 ${
             activeTab === 'events'
-              ? 'border-blue-500 text-blue-400'
+              ? 'border-blue-500 text-blue-400 font-bold'
               : 'border-transparent text-slate-400 hover:text-slate-200'
           }`}
         >
@@ -493,7 +514,21 @@ export const TaskView: React.FC<TaskViewProps> = ({
 
       {/* Tab Content */}
       <div className="p-6">
-        {activeTab === 'ui' ? (
+        {activeTab === 'workspace' ? (
+          task.experience_plan ? (
+            <ExperienceRenderer
+              plan={task.experience_plan}
+              isFullscreen={isExperienceFullscreen}
+              onToggleFullscreen={() => setIsExperienceFullscreen(!isExperienceFullscreen)}
+              executionMode={executionMode}
+              taskStatus={task.status}
+            />
+          ) : (
+            <div className="text-center py-12 text-slate-400 text-xs">
+              Initializing Adaptive Workspace experience plan...
+            </div>
+          )
+        ) : activeTab === 'ui' ? (
           <DeclarativeUIRenderer uiRoot={task.ui_state} />
         ) : (
           <div className="space-y-3">

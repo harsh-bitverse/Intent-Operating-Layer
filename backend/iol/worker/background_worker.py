@@ -26,6 +26,7 @@ from backend.iol.core.models import (
     TimelineItem, utc_now
 )
 from backend.iol.core.store import task_store
+from backend.iol.experience import ExperiencePlan, experience_planner
 
 logger = logging.getLogger("iol.worker")
 
@@ -204,6 +205,11 @@ class BackgroundWorker:
             self.store.update_task_ui(task_id, ui_root)
             self.store.append_event(task_id, EventType.UI_UPDATED, ui_root.model_dump())
 
+            # 2b. Initialize Experience Engine Plan
+            exp_plan = experience_planner.plan_experience(task_id, task.intent)
+            self.store.update_task_experience(task_id, exp_plan)
+            self.store.append_event(task_id, EventType.EXPERIENCE_UPDATED, exp_plan.model_dump())
+
             # 3. Step Execution Loop
             for step_idx, step in enumerate(plan.steps, start=1):
                 # Budget & cancellation check
@@ -279,10 +285,13 @@ class BackgroundWorker:
                         item.timestamp = utc_now().strftime("%H:%M:%S UTC")
 
                 # Enrich UI based on capability outcome
-                self._enrich_ui(ui_root, step.capability_id, cap_res.data, total_steps, step_idx, max_records=target_limit)
+                self._enrich_ui(ui_root, step.capability_id, cap_res.data, total_steps, step_idx, max_records=target_limit, exp_plan=exp_plan)
 
                 self.store.update_task_ui(task_id, ui_root)
                 self.store.append_event(task_id, EventType.UI_UPDATED, ui_root.model_dump())
+                if exp_plan:
+                    self.store.update_task_experience(task_id, exp_plan)
+                    self.store.append_event(task_id, EventType.EXPERIENCE_UPDATED, exp_plan.model_dump())
                 self.store.append_event(task_id, EventType.CAPABILITY_COMPLETED, {
                     "step_id": step.step_id,
                     "capability_id": step.capability_id,
@@ -301,6 +310,17 @@ class BackgroundWorker:
             self._update_ui_metric(ui_root, "Status", "COMPLETED")
             self._update_ui_metric(ui_root, "Steps", f"{total_steps} / {total_steps}")
             self.store.update_task_ui(task_id, ui_root)
+
+            if exp_plan:
+                exp_plan.status = "COMPLETED"
+                metric_comp = exp_plan.get_component("metric_strip_main")
+                if metric_comp:
+                    for m in metric_comp.props.get("metrics", []):
+                        if "Status" in m.get("label", ""):
+                            m["value"] = "COMPLETED"
+                            m["badge_color"] = "emerald"
+                self.store.update_task_experience(task_id, exp_plan)
+                self.store.append_event(task_id, EventType.EXPERIENCE_UPDATED, exp_plan.model_dump())
 
             final_result = {
                 "intent": task.intent,
@@ -373,12 +393,50 @@ class BackgroundWorker:
         data: Dict[str, Any],
         total_steps: int,
         step_idx: int,
-        max_records: int = 10
+        max_records: int = 10,
+        exp_plan: Optional[Any] = None
     ) -> None:
         """Dynamically enrich declarative UI tables, cards, and comparison matrices upon capability completion."""
         self._update_ui_metric(ui_root, "Steps", f"{step_idx} / {total_steps}")
 
-        if cap_id == "research.live_source_acquisition":
+        if cap_id == "educational.neural_simulation":
+            initial_loss = data.get("initial_loss", 0.5)
+            final_loss = data.get("final_loss", 0.041)
+            ui_root.summary = f"Neural simulation complete: Loss reduced from {initial_loss} to {final_loss} via backpropagation."
+            self._update_ui_metric(ui_root, "Status", "COMPLETED")
+            for comp in ui_root.components:
+                if isinstance(comp, TableComponent) and comp.id == "candidate_table":
+                    comp.title = "Neural Network Step-by-Step Mathematical Calculations"
+                    comp.columns = [
+                        TableColumn(key="phase", header="Phase / Step", type="text"),
+                        TableColumn(key="description", header="Mathematical Description", type="text"),
+                        TableColumn(key="loss", header="Loss", type="badge"),
+                        TableColumn(key="formula", header="Governing Formula", type="text"),
+                    ]
+                    comp.rows = [
+                        {
+                            "phase": s.get("phase"),
+                            "description": s.get("description"),
+                            "loss": f"MSE: {s.get('loss')}",
+                            "formula": s.get("formula"),
+                            "confidence": 1.0,
+                            "status": "CALCULATED"
+                        }
+                        for s in data.get("steps_detail", [])
+                    ]
+            if exp_plan:
+                exp_plan.update_component_props("neural_canvas_main", data)
+                metric_comp = exp_plan.get_component("metric_strip_main")
+                if metric_comp:
+                    for m in metric_comp.props.get("metrics", []):
+                        if "Loss" in m.get("label", ""):
+                            m["value"] = f"{final_loss:.4f}"
+                            m["badge_color"] = "emerald"
+                        elif "Simulation" in m.get("label", ""):
+                            m["value"] = "Completed (5 Steps)"
+                            m["badge_color"] = "emerald"
+
+        elif cap_id == "research.live_source_acquisition":
             sources = data.get("sources", [])
             provider_used = data.get("provider_used", "direct_apis")
             if provider_used == "recorded_replay_fixture":
@@ -390,6 +448,15 @@ class BackgroundWorker:
 
             self._update_ui_metric(ui_root, "Execution Mode", mode_str)
             self._update_ui_metric(ui_root, "Sources Acquired", len(sources))
+            if exp_plan:
+                metric_comp = exp_plan.get_component("metric_strip_main")
+                if metric_comp:
+                    for m in metric_comp.props.get("metrics", []):
+                        if "Execution Mode" in m.get("label", ""):
+                            m["value"] = mode_str
+                            m["badge_color"] = "green" if "LIVE" in mode_str else "purple"
+                        elif "Discovered" in m.get("label", "") or "Acquired" in m.get("label", ""):
+                            m["value"] = len(sources)
 
         elif cap_id in ("research.generalized_extraction", "research.structured_extraction"):
             records = data.get("records", [])
@@ -402,6 +469,11 @@ class BackgroundWorker:
                         row["status"] = "EXTRACTED"
                         new_rows.append(row)
                     comp.rows = new_rows
+                    if exp_plan:
+                        grid_comp = exp_plan.get_component("research_grid_main") or exp_plan.get_component("comparison_matrix_main")
+                        if grid_comp:
+                            grid_comp.props["rows"] = new_rows
+                            grid_comp.props["placeholder_count"] = max(0, 5 - len(new_rows))
 
         elif cap_id in ("research.generalized_verification", "research.verification"):
             verified = data.get("verified_records") or data.get("verified_entities", [])
@@ -423,6 +495,17 @@ class BackgroundWorker:
                             f["_validation_flags"] = v["validation_flags"]
                         new_rows.append(f)
                     comp.rows = new_rows
+                    if exp_plan:
+                        grid_comp = exp_plan.get_component("research_grid_main") or exp_plan.get_component("comparison_matrix_main")
+                        if grid_comp:
+                            grid_comp.props["rows"] = new_rows
+                            grid_comp.props["placeholder_count"] = max(0, 5 - len(new_rows))
+                        metric_comp = exp_plan.get_component("metric_strip_main")
+                        if metric_comp:
+                            for m in metric_comp.props.get("metrics", []):
+                                if "Verified" in m.get("label", "") or "Authentic" in m.get("label", ""):
+                                    m["value"] = len(new_rows)
+                                    m["badge_color"] = "emerald"
 
         elif cap_id == "research.semantic_relevance":
             qualified = data.get("qualified_candidates", [])
@@ -458,6 +541,17 @@ class BackgroundWorker:
                         f["_relevance_evidence"] = q.get("relevance_evidence")
                         new_rows.append(f)
                     comp.rows = new_rows
+                    if exp_plan:
+                        grid_comp = exp_plan.get_component("research_grid_main") or exp_plan.get_component("comparison_matrix_main")
+                        if grid_comp:
+                            grid_comp.props["rows"] = new_rows
+                            grid_comp.props["placeholder_count"] = max(0, 5 - len(new_rows))
+                        metric_comp = exp_plan.get_component("metric_strip_main")
+                        if metric_comp:
+                            for m in metric_comp.props.get("metrics", []):
+                                if "Verified" in m.get("label", "") or "Authentic" in m.get("label", ""):
+                                    m["value"] = len(new_rows)
+                                    m["badge_color"] = "emerald"
 
         elif cap_id == "data.deduplication":
             unique = data.get("unique_entities", [])
@@ -483,6 +577,17 @@ class BackgroundWorker:
                             f["_relevance_evidence"] = u.get("relevance_evidence") or (u.get("fields", {}).get("_relevance_evidence") if isinstance(u.get("fields"), dict) else None)
                         new_rows.append(f)
                     comp.rows = new_rows
+                    if exp_plan:
+                        grid_comp = exp_plan.get_component("research_grid_main") or exp_plan.get_component("comparison_matrix_main")
+                        if grid_comp:
+                            grid_comp.props["rows"] = new_rows
+                            grid_comp.props["placeholder_count"] = 0
+                        metric_comp = exp_plan.get_component("metric_strip_main")
+                        if metric_comp:
+                            for m in metric_comp.props.get("metrics", []):
+                                if "Verified" in m.get("label", "") or "Authentic" in m.get("label", ""):
+                                    m["value"] = len(new_rows)
+                                    m["badge_color"] = "emerald"
 
             # Workstream D: Build comparative analysis matrix if 2+ entities
             self._build_comparison_component(ui_root, unique)

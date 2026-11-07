@@ -36,6 +36,30 @@ class AdaptiveCapabilityPlanner(BaseAgentAdapter):
         cap_ids = {c.capability_id for c in available_capabilities}
         intent_lower = intent.lower()
 
+        # Educational & Simulation Intent Planning
+        educational_keywords = ["teach", "neural network", "learns", "simulation", "perceptron", "gradient descent", "backpropagation"]
+        if "educational.neural_simulation" in cap_ids and any(kw in intent_lower for kw in educational_keywords):
+            steps = [
+                PlanStep(
+                    step_id="step_neural_simulation",
+                    capability_id="educational.neural_simulation",
+                    title="Neural Network Forward Pass & Backpropagation Simulation",
+                    description="Compute step-by-step mathematical activations, loss, and gradient descent weight updates.",
+                    parameters={
+                        "concept": "neural_network_learning",
+                        "input_values": [0.5, 0.8],
+                        "target_value": 1.0,
+                        "learning_rate": 0.1
+                    }
+                )
+            ]
+            return ExecutionPlan(
+                plan_id=f"plan_{uuid.uuid4().hex[:8]}",
+                intent=intent,
+                rationale="Simulate step-by-step neural network learning forward/backward cycle with mathematical activations and loss updates.",
+                steps=steps
+            )
+
         # 1. Parse Intent into Typed ResearchRequest
         req = self._parse_intent_to_research_request(intent, context)
 

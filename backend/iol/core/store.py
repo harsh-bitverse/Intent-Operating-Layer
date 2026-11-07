@@ -220,6 +220,24 @@ class DurableTaskStore:
         finally:
             conn.close()
 
+    def update_task_experience(self, task_id: str, plan: Any) -> None:
+        """Persist updated experience plan in task metadata."""
+        plan_dict = plan.model_dump() if hasattr(plan, "model_dump") else plan
+        conn = self._get_connection()
+        try:
+            cursor = conn.execute("SELECT metadata_json FROM iol_tasks WHERE task_id = ?;", (task_id,))
+            row = cursor.fetchone()
+            if row:
+                meta = json.loads(row["metadata_json"]) if row["metadata_json"] else {}
+                meta["experience_plan"] = plan_dict
+                conn.execute(
+                    "UPDATE iol_tasks SET metadata_json = ? WHERE task_id = ?;",
+                    (json.dumps(meta, default=str), task_id)
+                )
+                conn.commit()
+        finally:
+            conn.close()
+
     def update_task_result(self, task_id: str, result: Dict[str, Any]) -> None:
         """Persist structured outcome payload."""
         conn = self._get_connection()
@@ -345,6 +363,7 @@ class DurableTaskStore:
             retry_count=row["retry_count"],
             result=result,
             ui_state=ui_state,
+            experience_plan=meta.get("experience_plan"),
             metadata=meta
         )
 

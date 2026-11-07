@@ -111,6 +111,8 @@ export interface DeclarativeUIRoot {
   last_updated: string;
 }
 
+import { ExperiencePlan } from './experience';
+
 export interface Task {
   task_id: string;
   user_id?: string;
@@ -126,6 +128,7 @@ export interface Task {
   retry_count: number;
   result?: Record<string, any>;
   ui_state?: DeclarativeUIRoot;
+  experience_plan?: ExperiencePlan;
   metadata: Record<string, any>;
 }
 

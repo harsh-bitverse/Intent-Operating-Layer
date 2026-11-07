@@ -1,0 +1,155 @@
+"""
+Experience Planner for IOL v0.6.
+Responsible for compiling and progressively updating ExperiencePlans
+without delaying or blocking the core Execution Engine.
+"""
+
+from typing import Any, Dict, List, Optional
+from backend.iol.experience.models import ExperiencePlan
+from backend.iol.experience.recipes import experience_recipe_store
+
+
+class ExperiencePlanner:
+    """Compiles task layout plans and binds progressive execution data into UI components."""
+
+    def __init__(self):
+        self.recipe_store = experience_recipe_store
+
+    def plan_experience(
+        self,
+        task_id: str,
+        intent: str,
+        research_request: Optional[Any] = None
+    ) -> ExperiencePlan:
+        """
+        Produce initial ExperiencePlan immediately (<5ms) before or at the start of task execution.
+        """
+        entity_type = None
+        custom_columns = None
+
+        if research_request:
+            entity_type = getattr(research_request, "entity_type", None) or getattr(research_request, "target_entity", None)
+
+        if not entity_type:
+            intent_lower = intent.lower()
+            if "startup" in intent_lower or "company" in intent_lower or "companies" in intent_lower:
+                entity_type = "startup"
+            elif "professor" in intent_lower or "faculty" in intent_lower or "researcher" in intent_lower:
+                entity_type = "professor"
+            elif "neural" in intent_lower or "teach" in intent_lower or "network" in intent_lower:
+                entity_type = "neural_network"
+            elif "repository" in intent_lower or "repo" in intent_lower or "tool" in intent_lower:
+                entity_type = "repository"
+
+        # Build column schema tailored to entity type if applicable
+        if entity_type == "startup":
+            custom_columns = [
+                {"key": "company_name", "header": "Startup Name", "type": "text"},
+                {"key": "location", "header": "Location", "type": "badge"},
+                {"key": "product_category", "header": "Category", "type": "text"},
+                {"key": "key_product", "header": "Key Offering", "type": "text"},
+                {"key": "stage", "header": "Stage / Traction", "type": "badge"},
+                {"key": "url", "header": "Verified URL", "type": "link"},
+                {"key": "confidence", "header": "Confidence", "type": "score"}
+            ]
+        elif entity_type == "professor":
+            custom_columns = [
+                {"key": "name", "header": "Professor Name", "type": "text"},
+                {"key": "institution", "header": "Institution", "type": "badge"},
+                {"key": "research_focus", "header": "Research Focus", "type": "text"},
+                {"key": "top_paper", "header": "Key Work / Paper", "type": "text"},
+                {"key": "url", "header": "Profile / OpenAlex", "type": "link"},
+                {"key": "confidence", "header": "Confidence", "type": "score"}
+            ]
+        elif entity_type == "repository":
+            custom_columns = [
+                {"key": "name", "header": "Repository / Tool", "type": "text"},
+                {"key": "stars", "header": "GitHub Stars", "type": "badge"},
+                {"key": "description", "header": "Description", "type": "text"},
+                {"key": "license", "header": "License", "type": "badge"},
+                {"key": "url", "header": "Repository URL", "type": "link"},
+                {"key": "confidence", "header": "Confidence", "type": "score"}
+            ]
+
+        # Match recipe
+        recipe = self.recipe_store.find_matching_recipe(intent, entity_type)
+
+        # Adapt into concrete plan
+        plan = self.recipe_store.adapt_recipe_to_plan(
+            recipe=recipe,
+            task_id=task_id,
+            intent=intent,
+            entity_type=entity_type,
+            custom_columns=custom_columns
+        )
+
+        return plan
+
+    def bind_records_to_plan(
+        self,
+        plan: ExperiencePlan,
+        records: List[Dict[str, Any]],
+        execution_mode: Optional[str] = None,
+        status: Optional[str] = None
+    ) -> ExperiencePlan:
+        """
+        Progressively bind verified records and updated status into the ExperiencePlan.
+        """
+        target_slot = plan.metadata.get("data_binding_slots", {}).get("primary_records", "research_grid_main")
+        grid = plan.get_component(target_slot)
+        if grid:
+            grid.props["rows"] = records
+            grid.props["placeholder_count"] = max(0, 5 - len(records))
+
+        # Update metrics strip
+        metrics_slot = plan.metadata.get("data_binding_slots", {}).get("status_metrics", "metric_strip_main")
+        metric_strip = plan.get_component(metrics_slot)
+        if metric_strip:
+            metrics_list = metric_strip.props.get("metrics", [])
+            for m in metrics_list:
+                lbl = m.get("label", "")
+                if "Status" in lbl and status:
+                    m["value"] = status
+                    m["badge_color"] = "emerald" if status == "COMPLETED" else "blue"
+                elif "Execution Mode" in lbl and execution_mode:
+                    m["value"] = execution_mode
+                    m["badge_color"] = "green" if "LIVE" in execution_mode else "purple"
+                elif "Entities" in lbl or "Verified" in lbl or "Discovered" in lbl:
+                    m["value"] = len(records)
+                    m["badge_color"] = "emerald"
+
+        if status:
+            plan.status = status
+
+        return plan
+
+    def bind_simulation_to_plan(
+        self,
+        plan: ExperiencePlan,
+        step_idx: int,
+        metrics: Optional[Dict[str, Any]] = None
+    ) -> ExperiencePlan:
+        """
+        Update educational 2D interactive canvas state for step-by-step walkthroughs.
+        """
+        target_slot = plan.metadata.get("data_binding_slots", {}).get("simulation_state", "neural_canvas_main")
+        canvas = plan.get_component(target_slot)
+        if canvas:
+            canvas.props["current_step"] = step_idx
+
+        # Update metric strip
+        metrics_slot = plan.metadata.get("data_binding_slots", {}).get("status_metrics", "metric_strip_main")
+        metric_strip = plan.get_component(metrics_slot)
+        if metric_strip and metrics:
+            metrics_list = metric_strip.props.get("metrics", [])
+            for m in metrics_list:
+                key = m.get("label", "").lower()
+                for k, v in metrics.items():
+                    if k.lower() in key:
+                        m["value"] = str(v)
+
+        return plan
+
+
+# Global singleton instance
+experience_planner = ExperiencePlanner()

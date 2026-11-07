@@ -76,6 +76,25 @@ async def get_task(
     return task
 
 
+@api_router.get("/tasks/{task_id}/experience")
+async def get_task_experience(
+    task_id: str,
+    current_user: UserContext = Depends(get_current_user)
+):
+    """Retrieve the current ExperiencePlan for adaptive workspace rendering."""
+    task = task_store.get_task(task_id)
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task '{task_id}' not found."
+        )
+    verify_task_ownership(task, current_user)
+    return {
+        "task_id": task_id,
+        "experience_plan": task.experience_plan
+    }
+
+
 @api_router.post("/tasks/{task_id}/cancel")
 async def cancel_task(
     task_id: str,

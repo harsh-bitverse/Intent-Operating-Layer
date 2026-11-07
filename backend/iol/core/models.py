@@ -143,6 +143,7 @@ class Task(BaseModel):
     retry_count: int = 0
     result: Optional[Dict[str, Any]] = None
     ui_state: Optional[DeclarativeUIRoot] = None
+    experience_plan: Optional[Dict[str, Any]] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

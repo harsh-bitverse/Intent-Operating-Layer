@@ -18,6 +18,8 @@ backend/data/*
 .demo_data/
 frontend/test-results/
 frontend/playwright-report/
+test-results/
+playwright-report/
 
 # Environment files
 .env
