@@ -144,6 +144,7 @@ class Task(BaseModel):
     result: Optional[Dict[str, Any]] = None
     ui_state: Optional[DeclarativeUIRoot] = None
     experience_plan: Optional[Dict[str, Any]] = None
+    outcome_envelope: Optional[Dict[str, Any]] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

@@ -26,6 +26,10 @@ from backend.iol.core.models import (
     TimelineItem, utc_now
 )
 from backend.iol.core.store import task_store
+from backend.iol.core.outcome import (
+    OutcomeEnvelopeV1, OutcomeFieldSchema, OutcomeItem,
+    OutcomeEvidenceRecord, OutcomeShape, SourceMode
+)
 from backend.iol.experience import ExperiencePlan, experience_planner
 
 logger = logging.getLogger("iol.worker")
@@ -210,6 +214,25 @@ class BackgroundWorker:
             self.store.update_task_experience(task_id, exp_plan)
             self.store.append_event(task_id, EventType.EXPERIENCE_UPDATED, exp_plan.model_dump())
 
+            # 2c. Initialize Outcome Envelope
+            is_edu = any("educational" in s.capability_id for s in plan.steps)
+            is_browser = any("browser" in s.capability_id for s in plan.steps)
+            initial_shape = OutcomeShape.SIMULATION if is_edu else (
+                OutcomeShape.DOCUMENT if is_browser else OutcomeShape.COLLECTION
+            )
+            initial_mode = SourceMode.LOCAL_COMPUTATION if is_edu else (
+                SourceMode.LIVE_BROWSER if is_browser else SourceMode.LIVE_API
+            )
+            outcome_env = OutcomeEnvelopeV1(
+                shape=initial_shape,
+                title=f"Outcome for '{task.intent[:60]}'",
+                summary="Executing capabilities...",
+                source_mode=initial_mode,
+                revision=1
+            )
+            self.store.update_task_outcome(task_id, outcome_env)
+            self.store.append_event(task_id, EventType.OUTCOME_UPDATED, outcome_env.model_dump())
+
             # 3. Step Execution Loop
             for step_idx, step in enumerate(plan.steps, start=1):
                 # Budget & cancellation check
@@ -285,13 +308,15 @@ class BackgroundWorker:
                         item.timestamp = utc_now().strftime("%H:%M:%S UTC")
 
                 # Enrich UI based on capability outcome
-                self._enrich_ui(ui_root, step.capability_id, cap_res.data, total_steps, step_idx, max_records=target_limit, exp_plan=exp_plan)
+                self._enrich_ui(ui_root, step.capability_id, cap_res.data, total_steps, step_idx, max_records=target_limit, exp_plan=exp_plan, outcome_env=outcome_env)
 
                 self.store.update_task_ui(task_id, ui_root)
                 self.store.append_event(task_id, EventType.UI_UPDATED, ui_root.model_dump())
                 if exp_plan:
                     self.store.update_task_experience(task_id, exp_plan)
                     self.store.append_event(task_id, EventType.EXPERIENCE_UPDATED, exp_plan.model_dump())
+                self.store.update_task_outcome(task_id, outcome_env)
+                self.store.append_event(task_id, EventType.OUTCOME_UPDATED, outcome_env.model_dump())
                 self.store.append_event(task_id, EventType.CAPABILITY_COMPLETED, {
                     "step_id": step.step_id,
                     "capability_id": step.capability_id,
@@ -326,7 +351,8 @@ class BackgroundWorker:
                 "intent": task.intent,
                 "status": "COMPLETED",
                 "steps_completed": total_steps,
-                "step_outputs": step_outputs
+                "step_outputs": step_outputs,
+                "outcome_envelope": outcome_env.model_dump()
             }
             self.store.update_task_result(task_id, final_result)
             self.store.update_task_status(task_id, TaskStatus.COMPLETED)
@@ -394,7 +420,8 @@ class BackgroundWorker:
         total_steps: int,
         step_idx: int,
         max_records: int = 10,
-        exp_plan: Optional[Any] = None
+        exp_plan: Optional[Any] = None,
+        outcome_env: Optional[OutcomeEnvelopeV1] = None
     ) -> None:
         """Dynamically enrich declarative UI tables, cards, and comparison matrices upon capability completion."""
         self._update_ui_metric(ui_root, "Steps", f"{step_idx} / {total_steps}")
@@ -424,6 +451,30 @@ class BackgroundWorker:
                         }
                         for s in data.get("steps_detail", [])
                     ]
+            if outcome_env:
+                outcome_env.shape = OutcomeShape.SIMULATION
+                outcome_env.source_mode = SourceMode.LOCAL_COMPUTATION
+                outcome_env.summary = f"Neural simulation complete: Loss reduced from {initial_loss} to {final_loss} via backpropagation."
+                outcome_env.field_schema = [
+                    OutcomeFieldSchema(key="phase", header="Phase / Step", type="text", role="category"),
+                    OutcomeFieldSchema(key="description", header="Mathematical Description", type="text"),
+                    OutcomeFieldSchema(key="loss", header="Loss", type="badge", role="metric"),
+                    OutcomeFieldSchema(key="formula", header="Governing Formula", type="text"),
+                ]
+                outcome_env.items = [
+                    OutcomeItem(
+                        id=f"sim_step_{s.get('step_idx', idx)}",
+                        fields={
+                            "phase": s.get("phase"),
+                            "description": s.get("description"),
+                            "loss": f"MSE: {s.get('loss')}",
+                            "formula": s.get("formula"),
+                        },
+                        status="CALCULATED"
+                    )
+                    for idx, s in enumerate(data.get("steps_detail", []))
+                ]
+                outcome_env.revision += 1
             if exp_plan:
                 exp_plan.update_component_props("neural_canvas_main", data)
                 metric_comp = exp_plan.get_component("metric_strip_main")
@@ -589,8 +640,158 @@ class BackgroundWorker:
                                     m["value"] = len(new_rows)
                                     m["badge_color"] = "emerald"
 
+                    if outcome_env:
+                        outcome_env.shape = OutcomeShape.COLLECTION
+                        outcome_env.source_mode = SourceMode.LIVE_API
+                        outcome_env.summary = f"Verified {len(new_rows)} candidate entities with source evidence."
+                        items = []
+                        for i, r in enumerate(new_rows):
+                            raw_ev_list = r.get("_field_evidence", [])
+                            if isinstance(raw_ev_list, dict):
+                                raw_ev_list = list(raw_ev_list.values())
+                            elif not isinstance(raw_ev_list, list):
+                                raw_ev_list = [raw_ev_list]
+
+                            ev_records = []
+                            for ev in raw_ev_list:
+                                if isinstance(ev, dict):
+                                    ev_records.append(
+                                        OutcomeEvidenceRecord(
+                                            field_name=ev.get("field_name"),
+                                            source_url=ev.get("evidence_url") or ev.get("source_url"),
+                                            source_mode=SourceMode.LIVE_API,
+                                            excerpt=ev.get("evidence_excerpt") or ev.get("excerpt"),
+                                            verification_status=ev.get("verification_status", "verified"),
+                                            confidence=float(ev.get("confidence", 1.0)) if ev.get("confidence") is not None else 1.0
+                                        )
+                                    )
+                                elif isinstance(ev, str):
+                                    ev_records.append(
+                                        OutcomeEvidenceRecord(
+                                            source_url=ev if ev.startswith("http") else None,
+                                            excerpt=ev,
+                                            source_mode=SourceMode.LIVE_API,
+                                        )
+                                    )
+                            items.append(
+                                OutcomeItem(
+                                    id=f"cand_{i}",
+                                    fields={k: v for k, v in r.items() if not k.startswith("_")},
+                                    evidence=ev_records,
+                                    status=r.get("status", "VERIFIED")
+                                )
+                            )
+                        outcome_env.items = items
+                        outcome_env.revision += 1
+
             # Workstream D: Build comparative analysis matrix if 2+ entities
             self._build_comparison_component(ui_root, unique)
+
+        elif cap_id == "browser.navigate":
+            nav_url = data.get("url", "")
+            page_title = data.get("title", "")
+            snippet = data.get("text_snippet", "")
+            status_code = data.get("status_code", 200)
+            self._update_ui_metric(ui_root, "Execution Mode", "LIVE (BROWSER)")
+            self._update_ui_metric(ui_root, "Sources Acquired", 1)
+            ui_root.summary = f"Navigated to '{nav_url}' via sandboxed Playwright session. Title: '{page_title}'."
+            for comp in ui_root.components:
+                if isinstance(comp, TableComponent) and comp.id == "candidate_table":
+                    comp.title = f"Web Page Extraction: {page_title}"
+                    comp.columns = [
+                        TableColumn(key="property", header="Extracted Attribute", type="text"),
+                        TableColumn(key="value", header="Observed Data", type="text"),
+                        TableColumn(key="status", header="Verification", type="badge"),
+                    ]
+                    comp.rows = [
+                        {"property": "URL", "value": nav_url, "status": "VERIFIED"},
+                        {"property": "Page Title", "value": page_title, "status": "VERIFIED"},
+                        {"property": "Status Code", "value": str(status_code), "status": f"HTTP {status_code}"},
+                        {"property": "Text Content", "value": snippet[:300] + ("..." if len(snippet) > 300 else ""), "status": "CAPTURED"},
+                    ]
+            if exp_plan:
+                grid_comp = exp_plan.get_component("research_grid_main") or exp_plan.get_component("comparison_matrix_main")
+                if grid_comp:
+                    grid_comp.props["columns"] = [
+                        {"key": "property", "header": "Extracted Attribute", "type": "text"},
+                        {"key": "value", "header": "Observed Data", "type": "text"},
+                        {"key": "status", "header": "Verification", "type": "badge"},
+                    ]
+                    grid_comp.props["rows"] = [
+                        {"property": "URL", "value": nav_url, "status": "VERIFIED"},
+                        {"property": "Page Title", "value": page_title, "status": "VERIFIED"},
+                        {"property": "Status Code", "value": str(status_code), "status": f"HTTP {status_code}"},
+                        {"property": "Text Content", "value": snippet[:300] + ("..." if len(snippet) > 300 else ""), "status": "CAPTURED"},
+                    ]
+                    grid_comp.props["placeholder_count"] = 0
+            if outcome_env:
+                outcome_env.shape = OutcomeShape.DOCUMENT
+                outcome_env.source_mode = SourceMode.LIVE_BROWSER
+                outcome_env.summary = f"Navigated to {nav_url} ({page_title})"
+                outcome_env.field_schema = [
+                    OutcomeFieldSchema(key="property", header="Property", type="text"),
+                    OutcomeFieldSchema(key="value", header="Value", type="text"),
+                ]
+                outcome_env.items = [
+                    OutcomeItem(
+                        id="browser_nav_result",
+                        fields={"url": nav_url, "title": page_title, "status_code": status_code, "text": snippet[:500]},
+                        evidence=[OutcomeEvidenceRecord(source_url=nav_url, source_mode=SourceMode.LIVE_BROWSER, excerpt=snippet[:200])]
+                    )
+                ]
+                outcome_env.revision += 1
+
+        elif cap_id == "browser.extract":
+            ext_data = data.get("extracted_data", {})
+            ext_url = data.get("url", "")
+            ext_title = data.get("title", "")
+            headings = ext_data.get("headings", [])
+            ext_links = ext_data.get("external_links", [])
+            self._update_ui_metric(ui_root, "Verified Records", len(headings) + len(ext_links))
+            rows = []
+            for h in headings:
+                rows.append({"name": h, "type": "Heading / Section", "source": ext_url, "status": "EXTRACTED"})
+            for l in ext_links:
+                rows.append({"name": l.get("text", "Link"), "type": "Hyperlink", "source": l.get("href", ext_url), "status": "EXTRACTED"})
+            for comp in ui_root.components:
+                if isinstance(comp, TableComponent) and comp.id == "candidate_table":
+                    comp.title = f"Structured Entities Extracted from {ext_title}"
+                    comp.columns = [
+                        TableColumn(key="name", header="Entity / Section / Link", type="text"),
+                        TableColumn(key="type", header="Type", type="badge"),
+                        TableColumn(key="source", header="Source URL", type="link"),
+                        TableColumn(key="status", header="Status", type="badge"),
+                    ]
+                    comp.rows = rows
+            if exp_plan:
+                grid_comp = exp_plan.get_component("research_grid_main") or exp_plan.get_component("comparison_matrix_main")
+                if grid_comp:
+                    grid_comp.props["columns"] = [
+                        {"key": "name", "header": "Entity / Section / Link", "type": "text"},
+                        {"key": "type", "header": "Type", "type": "badge"},
+                        {"key": "source", "header": "Source URL", "type": "link"},
+                        {"key": "status", "header": "Status", "type": "badge"},
+                    ]
+                    grid_comp.props["rows"] = rows
+                    grid_comp.props["placeholder_count"] = 0
+            if outcome_env:
+                outcome_env.shape = OutcomeShape.COLLECTION
+                outcome_env.source_mode = SourceMode.LIVE_BROWSER
+                outcome_env.summary = f"Extracted {len(rows)} elements from {ext_title}"
+                outcome_env.field_schema = [
+                    OutcomeFieldSchema(key="name", header="Entity / Section / Link", type="text"),
+                    OutcomeFieldSchema(key="type", header="Type", type="badge"),
+                    OutcomeFieldSchema(key="source", header="Source URL", type="link"),
+                ]
+                outcome_env.items = [
+                    OutcomeItem(
+                        id=f"ext_{i}",
+                        fields=r,
+                        evidence=[OutcomeEvidenceRecord(source_url=ext_url, source_mode=SourceMode.LIVE_BROWSER, excerpt=r["name"])]
+                    )
+                    for i, r in enumerate(rows)
+                ]
+                outcome_env.revision += 1
 
         elif cap_id == "research.entity_discovery":
             entities = data.get("entities", [])

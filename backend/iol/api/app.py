@@ -13,6 +13,8 @@ from backend.iol.capabilities.registry import capability_registry
 from backend.iol.adapters.outreach.adapter import register_outreach_capabilities
 from backend.iol.capabilities.live_research import register_live_research_capabilities
 from backend.iol.capabilities.educational import register_educational_capabilities
+from backend.iol.capabilities.browser import register_browser_capabilities
+from backend.iol.browser.session import browser_session_manager
 from backend.iol.worker.background_worker import background_worker
 
 
@@ -23,6 +25,7 @@ async def lifespan(app: FastAPI):
     register_outreach_capabilities(capability_registry)
     register_live_research_capabilities(capability_registry)
     register_educational_capabilities(capability_registry)
+    register_browser_capabilities(capability_registry)
 
     # 2. Start independent background worker
     background_worker.start()
@@ -31,6 +34,7 @@ async def lifespan(app: FastAPI):
 
     # 3. Graceful shutdown
     await background_worker.stop()
+    await browser_session_manager.close_all()
 
 
 app = FastAPI(

@@ -238,6 +238,36 @@ class DurableTaskStore:
         finally:
             conn.close()
 
+    def update_task_metadata(self, task_id: str, metadata: Dict[str, Any]) -> None:
+        """Persist updated metadata dictionary."""
+        conn = self._get_connection()
+        try:
+            conn.execute(
+                "UPDATE iol_tasks SET metadata_json = ? WHERE task_id = ?;",
+                (json.dumps(metadata, default=str), task_id)
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def update_task_outcome(self, task_id: str, outcome: Any) -> None:
+        """Persist updated OutcomeEnvelopeV1 in task metadata and result."""
+        outcome_dict = outcome.model_dump() if hasattr(outcome, "model_dump") else outcome
+        conn = self._get_connection()
+        try:
+            cursor = conn.execute("SELECT metadata_json FROM iol_tasks WHERE task_id = ?;", (task_id,))
+            row = cursor.fetchone()
+            if row:
+                meta = json.loads(row["metadata_json"]) if row["metadata_json"] else {}
+                meta["outcome_envelope"] = outcome_dict
+                conn.execute(
+                    "UPDATE iol_tasks SET metadata_json = ? WHERE task_id = ?;",
+                    (json.dumps(meta, default=str), task_id)
+                )
+                conn.commit()
+        finally:
+            conn.close()
+
     def update_task_result(self, task_id: str, result: Dict[str, Any]) -> None:
         """Persist structured outcome payload."""
         conn = self._get_connection()
@@ -364,6 +394,7 @@ class DurableTaskStore:
             result=result,
             ui_state=ui_state,
             experience_plan=meta.get("experience_plan"),
+            outcome_envelope=meta.get("outcome_envelope"),
             metadata=meta
         )
 

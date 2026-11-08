@@ -60,6 +60,34 @@ class AdaptiveCapabilityPlanner(BaseAgentAdapter):
                 steps=steps
             )
 
+        # Browser Navigation & Web Extraction Intent Planning
+        url_match = re.search(r'https?://[^\s<>"]+', intent)
+        is_browse_intent = bool(url_match) or any(w in intent_lower for w in ["browse", "visit website", "open page", "extract from url", "inspect site", "web page"])
+        if "browser.navigate" in cap_ids and is_browse_intent:
+            target_url = url_match.group(0) if url_match else "https://example.com"
+            steps = [
+                PlanStep(
+                    step_id="step_browser_navigate",
+                    capability_id="browser.navigate",
+                    title=f"Navigate to {target_url}",
+                    description=f"Open sandboxed browser and load page at {target_url}.",
+                    parameters={"url": target_url, "timeout_ms": 15000}
+                ),
+                PlanStep(
+                    step_id="step_browser_extract",
+                    capability_id="browser.extract",
+                    title="Extract Page Structure and Telemetry",
+                    description="Extract semantic headings, links, metadata, and accessible elements.",
+                    parameters={"fields": ["title", "description", "headings", "external_links"]}
+                )
+            ]
+            return ExecutionPlan(
+                plan_id=f"plan_{uuid.uuid4().hex[:8]}",
+                intent=intent,
+                rationale=f"Sandboxed browser navigation to {target_url} and structured evidence extraction.",
+                steps=steps
+            )
+
         # 1. Parse Intent into Typed ResearchRequest
         req = self._parse_intent_to_research_request(intent, context)
 

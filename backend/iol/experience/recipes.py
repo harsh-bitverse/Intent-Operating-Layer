@@ -54,7 +54,19 @@ class ExperienceRecipeStore:
             if recipe:
                 return recipe
 
-        # 3. Default: Research Workspace Database recipe
+        # 3. Browser extraction matching
+        if "http://" in intent_lower or "https://" in intent_lower or any(kw in intent_lower for kw in ["browse", "website", "web page", "extract from", "visit"]):
+            recipe = self.get_recipe("exp_recipe_browser_extraction")
+            if recipe:
+                return recipe
+
+        # 4. Form drafting matching
+        if any(kw in intent_lower for kw in ["form", "apply", "application", "passport", "visa", "license", "draft form"]):
+            recipe = self.get_recipe("exp_recipe_form_draft")
+            if recipe:
+                return recipe
+
+        # 5. Default: Research Workspace Database recipe
         return self._recipes.get("exp_recipe_research_database") or list(self._recipes.values())[0]
 
     def adapt_recipe_to_plan(
@@ -303,6 +315,117 @@ class ExperienceRecipeStore:
                             ],
                             "rows": [],
                             "placeholder_count": 4
+                        }
+                    }
+                ]
+            )
+        )
+
+        # Recipe 4: Browser Web Extraction Workspace
+        self.register_recipe(
+            ExperienceRecipe(
+                recipe_id="exp_recipe_browser_extraction",
+                name="Web Intelligence & Extraction Workspace",
+                target_intent_family="browser_extraction",
+                description="Live sandboxed browser telemetry, extracted web entities, accessible elements, and DOM facts.",
+                compatible_entity_types=["web_page", "document", "site", "portal"],
+                layout_mode=ExperienceMode.FULL_WORKSPACE,
+                data_binding_slots={
+                    "primary_records": "research_grid_main",
+                    "status_metrics": "metric_strip_main"
+                },
+                default_components=[
+                    {
+                        "id": "metric_strip_main",
+                        "type": "metric_strip",
+                        "props": {
+                            "metrics": [
+                                {"label": "Browser Session", "value": "Playwright Chromium", "badge_color": "blue"},
+                                {"label": "Security Sandbox", "value": "SSRF Isolated", "badge_color": "emerald"},
+                                {"label": "Status", "value": "Navigating", "badge_color": "amber"},
+                            ]
+                        }
+                    },
+                    {
+                        "id": "research_grid_main",
+                        "type": "data_grid",
+                        "props": {
+                            "title": "Extracted Web Entities & Telemetry",
+                            "columns": [
+                                {"key": "name", "header": "Entity / Section / Link", "type": "text"},
+                                {"key": "type", "header": "Type", "type": "badge"},
+                                {"key": "source", "header": "Source URL", "type": "link"},
+                                {"key": "status", "header": "Verification", "type": "badge"}
+                            ],
+                            "rows": [],
+                            "placeholder_count": 4
+                        }
+                    }
+                ]
+            )
+        )
+
+        # Recipe 5: Guided Form Draft & Action Workspace
+        self.register_recipe(
+            ExperienceRecipe(
+                recipe_id="exp_recipe_form_draft",
+                name="Guided Form & Application Workspace",
+                target_intent_family="form_draft",
+                description="Structured form drafting, field validation, and secure operator approval gateway.",
+                compatible_entity_types=["form", "application", "submission"],
+                layout_mode=ExperienceMode.FULL_WORKSPACE,
+                data_binding_slots={
+                    "primary_records": "research_grid_main",
+                    "status_metrics": "metric_strip_main"
+                },
+                default_components=[
+                    {
+                        "id": "metric_strip_main",
+                        "type": "metric_strip",
+                        "props": {
+                            "metrics": [
+                                {"label": "Form Category", "value": "Public Application Draft", "badge_color": "purple"},
+                                {"label": "Approval Status", "value": "LOCAL_DRAFT", "badge_color": "amber"},
+                                {"label": "Submission Gate", "value": "Blocked (Approval Required)", "badge_color": "emerald"},
+                            ]
+                        }
+                    },
+                    {
+                        "id": "form_draft_main",
+                        "type": "form_draft",
+                        "props": {
+                            "title": "Government / Public Service Application Draft",
+                            "service_name": "Passport Seva Kendra",
+                            "jurisdiction": "Ministry of External Affairs",
+                            "status": "LOCAL_DRAFT",
+                            "official_portal_url": "https://passportindia.gov.in",
+                            "instructions": "Review the extracted draft fields below. In accordance with safety policies, this form has NOT been submitted to the government agency. You may copy these values directly to the official portal.",
+                            "fields": [
+                                {"name": "applicant_full_name", "label": "Full Legal Name", "value": "Jane Doe", "required": True, "source_evidence": "User Profile Context"},
+                                {"name": "date_of_birth", "label": "Date of Birth (DD/MM/YYYY)", "value": "15/08/1995", "required": True, "source_evidence": "User Profile Context"},
+                                {"name": "service_type", "label": "Application Service Type", "value": "Re-issue / Renewal of 36-page Passport", "required": True, "source_evidence": "Intent Specification"},
+                                {"name": "jurisdiction_office", "label": "Passport Office (RPO)", "value": "Bengaluru / Regional Office", "required": True, "source_evidence": "Intent Constraints"},
+                                {"name": "police_station", "label": "Nearest Police Station", "value": "Indiranagar Police Station", "required": True, "source_evidence": "Address Verification"}
+                            ]
+                        }
+                    },
+                    {
+                        "id": "research_grid_main",
+                        "type": "data_grid",
+                        "props": {
+                            "title": "Draft Application Fields & Requirements",
+                            "columns": [
+                                {"key": "field_name", "header": "Form Field / Question", "type": "text"},
+                                {"key": "value", "header": "Assisted Draft Value", "type": "text"},
+                                {"key": "required", "header": "Required", "type": "badge"},
+                                {"key": "status", "header": "Draft Status", "type": "badge"}
+                            ],
+                            "rows": [
+                                {"field_name": "Full Name", "value": "Jane Doe", "required": "Yes", "status": "DRAFTED"},
+                                {"field_name": "Contact Email", "value": "user@example.com", "required": "Yes", "status": "VERIFIED"},
+                                {"field_name": "Official Portal", "value": "https://passportindia.gov.in", "required": "Yes", "status": "HANDOFF_READY"}
+                            ],
+                            "placeholder_count": 0
                         }
                     }
                 ]

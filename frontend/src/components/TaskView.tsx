@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Task, TaskEvent, TaskStatus } from '../types/iol';
 import { DeclarativeUIRenderer } from './DeclarativeUIRenderer';
 import ExperienceRenderer from './experience/ExperienceRenderer';
+import ActionPanel from './experience/ActionPanel';
 
 interface TaskViewProps {
   taskId: string;
@@ -52,6 +53,12 @@ export const TaskView: React.FC<TaskViewProps> = ({
           const data: Task = await res.json();
           if (!data.experience_plan && data.metadata?.experience_plan) {
             data.experience_plan = data.metadata.experience_plan;
+          }
+          if (!data.outcome_envelope && data.metadata?.outcome_envelope) {
+            data.outcome_envelope = data.metadata.outcome_envelope;
+          }
+          if (!data.pending_action && data.metadata?.pending_action) {
+            data.pending_action = data.metadata.pending_action;
           }
           setTask(data);
           setAccessDenied(false);
@@ -151,6 +158,14 @@ export const TaskView: React.FC<TaskViewProps> = ({
 
                 if (eventType === 'EXPERIENCE_UPDATED' && parsed.data) {
                   setTask((prev) => (prev ? { ...prev, experience_plan: parsed.data } : prev));
+                } else if (eventType === 'OUTCOME_UPDATED' && parsed.data) {
+                  setTask((prev) => (prev ? { ...prev, outcome_envelope: parsed.data } : prev));
+                } else if ((eventType === 'APPROVAL_REQUIRED' || eventType === 'ACTION_REQUESTED') && parsed.data) {
+                  setTask((prev) => (prev ? { ...prev, status: 'PAUSED_FOR_APPROVAL' as TaskStatus, pending_action: parsed.data } : prev));
+                } else if (eventType === 'ACTION_APPROVED') {
+                  setTask((prev) => (prev ? { ...prev, status: 'RUNNING' as TaskStatus, pending_action: undefined } : prev));
+                } else if (eventType === 'ACTION_REJECTED') {
+                  setTask((prev) => (prev ? { ...prev, pending_action: undefined } : prev));
                 } else if (eventType === 'UI_UPDATED' && parsed.data) {
                   setTask((prev) => (prev ? { ...prev, ui_state: parsed.data } : prev));
                 } else if (eventType === 'TASK_COMPLETED') {
@@ -308,6 +323,25 @@ export const TaskView: React.FC<TaskViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  const handleExportReplayBundle = async () => {
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/tasks/${taskId}/replay-bundle`, {
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) throw new Error('Failed to download replay bundle');
+      const data = await res.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `iol_replay_bundle_${taskId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export replay bundle:', err);
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl backdrop-blur-xl overflow-hidden transition-all duration-200">
       {/* Task Header */}
@@ -398,28 +432,40 @@ export const TaskView: React.FC<TaskViewProps> = ({
             </div>
           </div>
 
-          {/* Export Verified Results */}
-          {hasExportableResults && (
-            <div className="flex items-center space-x-2">
-              <span className="text-[11px] text-slate-500 font-medium">Export Verified:</span>
+          {/* Export Verified Results & Replay Bundle */}
+          <div className="flex items-center space-x-2">
+            {hasExportableResults && (
+              <>
+                <span className="text-[11px] text-slate-500 font-medium">Export Verified:</span>
+                <button
+                  onClick={handleExportJSON}
+                  data-testid="export-json-button"
+                  className="rounded bg-slate-800 hover:bg-slate-700 px-2.5 py-1 text-[11px] font-medium text-slate-200 border border-slate-700 transition-colors shadow-sm"
+                  title="Download verified records with field-level evidence metadata in JSON"
+                >
+                  JSON
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  data-testid="export-csv-button"
+                  className="rounded bg-slate-800 hover:bg-slate-700 px-2.5 py-1 text-[11px] font-medium text-slate-200 border border-slate-700 transition-colors shadow-sm"
+                  title="Download verified records table in CSV"
+                >
+                  CSV
+                </button>
+              </>
+            )}
+            {events.length > 0 && (
               <button
-                onClick={handleExportJSON}
-                data-testid="export-json-button"
-                className="rounded bg-slate-800 hover:bg-slate-700 px-2.5 py-1 text-[11px] font-medium text-slate-200 border border-slate-700 transition-colors shadow-sm"
-                title="Download verified records with field-level evidence metadata in JSON"
+                onClick={handleExportReplayBundle}
+                data-testid="export-replay-bundle-btn"
+                className="rounded bg-purple-950/80 hover:bg-purple-900/80 px-2.5 py-1 text-[11px] font-semibold text-purple-200 border border-purple-800/80 transition-colors shadow-sm flex items-center gap-1"
+                title="Download offline replay bundle with verified evidence, sanitized credentials, and cryptographic integrity proof"
               >
-                JSON
+                <span>📦 Replay Bundle</span>
               </button>
-              <button
-                onClick={handleExportCSV}
-                data-testid="export-csv-button"
-                className="rounded bg-slate-800 hover:bg-slate-700 px-2.5 py-1 text-[11px] font-medium text-slate-200 border border-slate-700 transition-colors shadow-sm"
-                title="Download verified records table in CSV"
-              >
-                CSV
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Dynamic Execution Progress Bar: Indeterminate while Running, Real steps otherwise */}
@@ -465,6 +511,25 @@ export const TaskView: React.FC<TaskViewProps> = ({
           <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-950/30 p-4 text-xs text-amber-300">
             <span className="font-semibold text-amber-200">Execution Terminated: </span>
             Task was halted by operator cancellation request. All completed partial steps and evidence remain preserved.
+          </div>
+        )}
+
+        {/* Scoped Action Approval Banner */}
+        {(task.status === 'PAUSED_FOR_APPROVAL' || task.pending_action) && (
+          <div className="mt-4" data-testid="task-pending-approval-wrapper">
+            <ActionPanel
+              taskId={task.task_id}
+              actionRequest={task.pending_action}
+              apiKey={apiKey}
+              apiBaseUrl={apiBaseUrl}
+              onActionHandled={(decision) => {
+                if (decision === 'APPROVED') {
+                  setTask((prev) => (prev ? { ...prev, status: 'RUNNING' as TaskStatus, pending_action: undefined } : prev));
+                } else {
+                  setTask((prev) => (prev ? { ...prev, pending_action: undefined } : prev));
+                }
+              }}
+            />
           </div>
         )}
       </div>
@@ -522,6 +587,15 @@ export const TaskView: React.FC<TaskViewProps> = ({
               onToggleFullscreen={() => setIsExperienceFullscreen(!isExperienceFullscreen)}
               executionMode={executionMode}
               taskStatus={task.status}
+              apiKey={apiKey}
+              apiBaseUrl={apiBaseUrl}
+              onActionHandled={(decision) => {
+                if (decision === 'APPROVED') {
+                  setTask((prev) => (prev ? { ...prev, status: 'RUNNING' as TaskStatus, pending_action: undefined } : prev));
+                } else {
+                  setTask((prev) => (prev ? { ...prev, pending_action: undefined } : prev));
+                }
+              }}
             />
           ) : (
             <div className="text-center py-12 text-slate-400 text-xs">

@@ -111,7 +111,7 @@ export interface DeclarativeUIRoot {
   last_updated: string;
 }
 
-import { ExperiencePlan } from './experience';
+import { ExperiencePlan, OutcomeEnvelope, TaskActionRequest } from './experience';
 
 export interface Task {
   task_id: string;
@@ -129,6 +129,8 @@ export interface Task {
   result?: Record<string, any>;
   ui_state?: DeclarativeUIRoot;
   experience_plan?: ExperiencePlan;
+  outcome_envelope?: OutcomeEnvelope;
+  pending_action?: TaskActionRequest;
   metadata: Record<string, any>;
 }
 

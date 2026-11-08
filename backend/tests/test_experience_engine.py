@@ -155,3 +155,92 @@ async def test_end_to_end_educational_worker_execution():
     assert len(canvas_comp["props"]["nodes"]) == 5
     assert "steps_detail" in canvas_comp["props"]
     assert canvas_comp["props"]["final_loss"] < canvas_comp["props"]["initial_loss"]
+
+
+def test_experience_plan_validator_rules():
+    """Verify validator accepts valid catalog plans and blocks malicious/unknown components."""
+    from backend.iol.experience.validator import ExperiencePlanValidator
+    from backend.iol.experience.models import ExperienceComponent
+
+    valid_plan = ExperiencePlan(
+        plan_id="plan_valid_1",
+        task_id="task_val_1",
+        title="Valid Research Workspace",
+        components=[
+            ExperienceComponent(id="layout_root", type="workspace_layout", props={}),
+            ExperienceComponent(id="strip_1", type="metric_strip", props={"metrics": [{"label": "Count", "value": 5}]}),
+            ExperienceComponent(id="grid_1", type="data_grid", props={"columns": [{"key": "name", "header": "Name"}]}),
+        ]
+    )
+    is_valid, errors = ExperiencePlanValidator.validate_plan(valid_plan)
+    assert is_valid
+    assert len(errors) == 0
+
+    # Malicious script injection attempt
+    injected_plan = ExperiencePlan(
+        plan_id="plan_inj_1",
+        task_id="task_inj_1",
+        title="Injected Plan",
+        components=[
+            ExperienceComponent(
+                id="bad_comp",
+                type="data_grid",
+                props={"columns": [], "title": "<script>alert('pwn')</script>"}
+            )
+        ]
+    )
+    is_valid_inj, errors_inj = ExperiencePlanValidator.validate_plan(injected_plan)
+    assert not is_valid_inj
+    assert any("script injection" in e.lower() for e in errors_inj)
+
+    # Unknown component type
+    unknown_plan = ExperiencePlan(
+        plan_id="plan_unk_1",
+        task_id="task_unk_1",
+        title="Unknown Plan",
+        components=[
+            ExperienceComponent(id="unk_comp", type="custom_unregistered_widget", props={})
+        ]
+    )
+    is_valid_unk, errors_unk = ExperiencePlanValidator.validate_plan(unknown_plan)
+    assert not is_valid_unk
+    assert any("unknown component type" in e.lower() for e in errors_unk)
+
+
+def test_browser_and_form_recipes_matching():
+    """Verify browser navigation and form draft recipes match correctly."""
+    r_browser = experience_recipe_store.find_matching_recipe("Browse https://news.ycombinator.com and extract top stories")
+    assert r_browser.recipe_id == "exp_recipe_browser_extraction"
+
+    r_form = experience_recipe_store.find_matching_recipe("Draft an official passport renewal application form")
+    assert r_form.recipe_id == "exp_recipe_form_draft"
+
+
+def test_bind_outcome_to_plan_monotonic():
+    """Verify progressive outcome envelope binding monotonically updates version."""
+    from backend.iol.core.outcome import OutcomeEnvelopeV1, OutcomeFieldSchema, OutcomeItem, OutcomeShape, SourceMode
+
+    plan = experience_planner.plan_experience("task_bind_test", "Find 3 database engines")
+    assert plan.version == 1
+
+    outcome = OutcomeEnvelopeV1(
+        shape=OutcomeShape.COLLECTION,
+        title="Database Engines",
+        field_schema=[
+            OutcomeFieldSchema(key="engine", header="Database Engine", type="text"),
+            OutcomeFieldSchema(key="stars", header="Stars", type="number")
+        ],
+        items=[
+            OutcomeItem(id="db_1", fields={"engine": "PostgreSQL", "stars": 15000}),
+            OutcomeItem(id="db_2", fields={"engine": "DuckDB", "stars": 24000}),
+        ],
+        source_mode=SourceMode.LIVE_API,
+        revision=2
+    )
+
+    updated_plan = experience_planner.bind_outcome_to_plan(plan, outcome)
+    assert updated_plan.version == 2
+    grid = updated_plan.get_component("research_grid_main")
+    assert grid is not None
+    assert len(grid.props["rows"]) == 2
+    assert grid.props["rows"][0]["engine"] == "PostgreSQL"

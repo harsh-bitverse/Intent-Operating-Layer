@@ -82,6 +82,8 @@ class ExperiencePlanner:
             entity_type=entity_type,
             custom_columns=custom_columns
         )
+        plan.plan_origin = "RECIPE_ADAPTED"
+        plan.version = 1
 
         return plan
 
@@ -148,6 +150,55 @@ class ExperiencePlanner:
                     if k.lower() in key:
                         m["value"] = str(v)
 
+        return plan
+
+    def bind_outcome_to_plan(
+        self,
+        plan: ExperiencePlan,
+        outcome: Any
+    ) -> ExperiencePlan:
+        """
+        Progressively binds an OutcomeEnvelopeV1 into the ExperiencePlan.
+        Monotonically increments plan version without making LLM calls.
+        """
+        outcome_dict = outcome.model_dump() if hasattr(outcome, "model_dump") else outcome
+        items = outcome_dict.get("items", [])
+        field_schema = outcome_dict.get("field_schema", [])
+
+        # Update data_grid or comparison component if present
+        target_slot = plan.metadata.get("data_binding_slots", {}).get("primary_records", "research_grid_main")
+        grid = plan.get_component(target_slot) or plan.get_component("comparison_matrix_main")
+        if grid:
+            if field_schema:
+                grid.props["columns"] = [
+                    {"key": f.get("key"), "header": f.get("header"), "type": f.get("type", "text")}
+                    for f in field_schema
+                ]
+            rows = []
+            for it in items:
+                row = dict(it.get("fields", {}))
+                row["id"] = it.get("id")
+                if "evidence" in it:
+                    row["_evidence"] = it["evidence"]
+                rows.append(row)
+            grid.props["rows"] = rows
+            grid.props["placeholder_count"] = max(0, 4 - len(rows))
+
+        # Update metric strip
+        metrics_slot = plan.metadata.get("data_binding_slots", {}).get("status_metrics", "metric_strip_main")
+        metric_strip = plan.get_component(metrics_slot)
+        if metric_strip:
+            metrics_list = metric_strip.props.get("metrics", [])
+            for m in metrics_list:
+                lbl = m.get("label", "").lower()
+                if "status" in lbl:
+                    m["value"] = "COMPLETED" if len(items) > 0 else "RUNNING"
+                    m["badge_color"] = "emerald"
+                elif "records" in lbl or "entities" in lbl or "compared" in lbl:
+                    m["value"] = len(items)
+                    m["badge_color"] = "emerald"
+
+        plan.version += 1
         return plan
 
 

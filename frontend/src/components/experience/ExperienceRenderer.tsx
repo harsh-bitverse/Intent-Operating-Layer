@@ -4,6 +4,9 @@ import React from 'react';
 import { ExperiencePlan, MetricItem } from '../../types/experience';
 import InteractiveCanvas2D from './InteractiveCanvas2D';
 import WorkspaceDataGrid from './WorkspaceDataGrid';
+import FormDraft from './FormDraft';
+import ActionPanel from './ActionPanel';
+import BrowserTelemetryCard from './BrowserTelemetryCard';
 
 interface ExperienceRendererProps {
   plan: ExperiencePlan;
@@ -11,6 +14,9 @@ interface ExperienceRendererProps {
   onToggleFullscreen?: () => void;
   executionMode?: string | null;
   taskStatus?: string;
+  apiKey?: string;
+  apiBaseUrl?: string;
+  onActionHandled?: (decision: 'APPROVED' | 'REJECTED') => void;
 }
 
 export default function ExperienceRenderer({
@@ -18,13 +24,19 @@ export default function ExperienceRenderer({
   isFullscreen = false,
   onToggleFullscreen,
   executionMode,
-  taskStatus
+  taskStatus,
+  apiKey,
+  apiBaseUrl,
+  onActionHandled,
 }: ExperienceRendererProps) {
   if (!plan) return null;
 
   // Extract metric strip component
   const metricStripComp = plan.components.find((c) => c.type === 'metric_strip');
   const metrics: MetricItem[] = metricStripComp?.props?.metrics || [];
+
+  // Browser telemetry metadata if available
+  const browserInfo = plan.metadata?.browser_page_info;
 
   return (
     <div
@@ -41,6 +53,14 @@ export default function ExperienceRenderer({
           <span className="px-2.5 py-1 text-xs font-mono font-bold uppercase rounded bg-cyan-950 text-cyan-400 border border-cyan-800" data-testid="workspace-mode-badge">
             ⛶ {plan.mode.replace('_', ' ')}
           </span>
+          {plan.plan_origin && (
+            <span
+              data-testid="plan-origin-badge"
+              className="px-2 py-0.5 text-[10px] font-mono rounded bg-slate-800 text-slate-300 border border-slate-700"
+            >
+              {plan.plan_origin}
+            </span>
+          )}
           <div>
             <h2 className="text-xl font-bold text-white tracking-tight">{plan.title}</h2>
             {plan.subtitle && (
@@ -75,6 +95,18 @@ export default function ExperienceRenderer({
           )}
         </div>
       </div>
+
+      {/* Browser Telemetry (if present in metadata) */}
+      {browserInfo && (
+        <BrowserTelemetryCard
+          url={browserInfo.url}
+          title={browserInfo.title}
+          http_status={browserInfo.http_status}
+          thumbnail_base64={browserInfo.thumbnail_base64}
+          accessible_elements_count={browserInfo.accessible_elements_count}
+          text_content_snippet={browserInfo.text_content_snippet}
+        />
+      )}
 
       {/* Metric Strip Component */}
       {metrics.length > 0 && (
@@ -119,8 +151,25 @@ export default function ExperienceRenderer({
             return <InteractiveCanvas2D key={comp.id} {...(comp.props as any)} />;
           }
 
-          if (comp.type === 'data_grid') {
+          if (comp.type === 'data_grid' || comp.type === 'comparison_matrix') {
             return <WorkspaceDataGrid key={comp.id} {...(comp.props as any)} />;
+          }
+
+          if (comp.type === 'form_draft') {
+            return <FormDraft key={comp.id} {...(comp.props as any)} />;
+          }
+
+          if (comp.type === 'action_panel') {
+            return (
+              <ActionPanel
+                key={comp.id}
+                taskId={plan.task_id}
+                apiKey={apiKey}
+                apiBaseUrl={apiBaseUrl}
+                onActionHandled={onActionHandled}
+                {...(comp.props as any)}
+              />
+            );
           }
 
           // Ignore metric_strip here as it is rendered above

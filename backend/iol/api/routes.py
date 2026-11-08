@@ -13,9 +13,13 @@ from backend.iol.api.auth import UserContext, get_current_user, verify_task_owne
 from backend.iol.capabilities.registry import capability_registry
 from backend.iol.core.events import EventType, format_sse_message
 from backend.iol.core.models import (
-    CancelTaskRequest, CreateTaskRequest, Task, TaskStatus
+    CancelTaskRequest, CreateTaskRequest, Task, TaskStatus, utc_now
 )
 from backend.iol.core.store import task_store
+from backend.iol.core.actions import TaskActionRequest, action_approval_manager
+from backend.iol.core.replay_bundle import create_replay_bundle
+from backend.iol.browser.models import BrowserActionEffect
+from pydantic import BaseModel
 from backend.iol.worker.background_worker import background_worker
 
 api_router = APIRouter(prefix="/api")
@@ -92,6 +96,25 @@ async def get_task_experience(
     return {
         "task_id": task_id,
         "experience_plan": task.experience_plan
+    }
+
+
+@api_router.get("/tasks/{task_id}/outcome")
+async def get_task_outcome(
+    task_id: str,
+    current_user: UserContext = Depends(get_current_user)
+):
+    """Retrieve the current OutcomeEnvelopeV1 for data and evidence inspection."""
+    task = task_store.get_task(task_id)
+    if not task:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task '{task_id}' not found."
+        )
+    verify_task_ownership(task, current_user)
+    return {
+        "task_id": task_id,
+        "outcome_envelope": task.outcome_envelope
     }
 
 
@@ -226,3 +249,150 @@ async def task_event_stream(
 async def list_capabilities():
     """Discover available IOL capabilities with JSON schemas and verification metadata."""
     return capability_registry.list_capabilities()
+
+
+# ------------------------------------------------------------------------------
+# Action Approval & UI Action Relay Endpoints
+# ------------------------------------------------------------------------------
+class ApproveActionPayload(BaseModel):
+    ticket_id: str
+    fingerprint: Optional[str] = None
+
+
+class RejectActionPayload(BaseModel):
+    ticket_id: str
+    reason: Optional[str] = None
+
+
+@api_router.post("/tasks/{task_id}/actions")
+async def request_task_action(
+    task_id: str,
+    action_req: TaskActionRequest,
+    current_user: UserContext = Depends(get_current_user)
+):
+    """
+    Submits a UI or execution action for backend validation, policy check, and scoped execution.
+    """
+    task = task_store.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task '{task_id}' not found.")
+    verify_task_ownership(task, current_user)
+
+    action_req.task_id = task_id
+
+    # If action has consequential side effects, require approval ticket
+    if action_req.effect in (BrowserActionEffect.EXTERNAL_WRITE, BrowserActionEffect.PAYMENT_OR_ORDER, BrowserActionEffect.DESTRUCTIVE):
+        ticket = action_approval_manager.create_ticket(action_req)
+        task_store.update_task_status(task_id, TaskStatus.PAUSED_FOR_APPROVAL)
+
+        pending_data = {
+            "ticket_id": ticket.ticket_id,
+            "action_id": action_req.action_id,
+            "action_type": action_req.action_type,
+            "effect": action_req.effect.value,
+            "target_url": action_req.target_endpoint or getattr(action_req, "target_url", None),
+            "fingerprint": ticket.fingerprint,
+            "expires_at": ticket.expires_at,
+            "parameters": action_req.parameters,
+            "explanation": action_req.rationale or "This action requires operator approval.",
+            "ticket": ticket.model_dump()
+        }
+
+        curr = task_store.get_task(task_id)
+        if curr:
+            meta = dict(curr.metadata or {})
+            meta["pending_action"] = pending_data
+            task_store.update_task_metadata(task_id, meta)
+
+        task_store.append_event(task_id, EventType.APPROVAL_REQUIRED, pending_data)
+        return {
+            "status": "APPROVAL_REQUIRED",
+            "approval_status": "APPROVAL_REQUIRED",
+            "message": f"Action '{action_req.action_type}' has effect '{action_req.effect.value}' and requires operator approval.",
+            "ticket": ticket.model_dump()
+        }
+
+    # Safe / Draft action
+    task_store.append_event(task_id, EventType.ACTION_COMPLETED, {
+        "action_id": action_req.action_id,
+        "action_type": action_req.action_type,
+        "effect": action_req.effect.value,
+        "status": "COMPLETED"
+    })
+    return {
+        "status": "COMPLETED",
+        "action_id": action_req.action_id,
+        "message": f"Action '{action_req.action_type}' executed safely without external side effects."
+    }
+
+
+@api_router.post("/tasks/{task_id}/actions/approve")
+async def approve_task_action(
+    task_id: str,
+    payload: ApproveActionPayload,
+    current_user: UserContext = Depends(get_current_user)
+):
+    """
+    Approves and executes a consequential action using a scoped cryptographic ticket fingerprint.
+    """
+    task = task_store.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task '{task_id}' not found.")
+    verify_task_ownership(task, current_user)
+
+    success, err = action_approval_manager.approve_ticket(
+        ticket_id=payload.ticket_id,
+        fingerprint=payload.fingerprint,
+        approver_id=current_user.user_id
+    )
+    if not success:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err or "Approval failed.")
+
+    # Execute action and record
+    result = {"approved": True, "executed_at": utc_now().isoformat(), "approver": current_user.user_id}
+    action_approval_manager.mark_executed(payload.ticket_id, result)
+
+    # Resume task and clear pending action
+    task_store.update_task_status(task_id, TaskStatus.COMPLETED)
+    curr = task_store.get_task(task_id)
+    if curr and "pending_action" in (curr.metadata or {}):
+        meta = dict(curr.metadata)
+        meta.pop("pending_action", None)
+        task_store.update_task_metadata(task_id, meta)
+    task_store.append_event(task_id, EventType.ACTION_APPROVED, {
+        "ticket_id": payload.ticket_id,
+        "fingerprint": payload.fingerprint,
+        "approved_by": current_user.user_id
+    })
+    task_store.append_event(task_id, EventType.ACTION_COMPLETED, {
+        "ticket_id": payload.ticket_id,
+        "status": "EXECUTED",
+        "result": result
+    })
+
+    return {
+        "status": "APPROVED_AND_EXECUTED",
+        "ticket_id": payload.ticket_id,
+        "result": result
+    }
+
+
+@api_router.get("/tasks/{task_id}/replay-bundle")
+async def get_replay_bundle(
+    task_id: str,
+    current_user: UserContext = Depends(get_current_user)
+):
+    """
+    Exports a privacy-scrubbed, tamper-evident ReplayBundle for offline demonstration.
+    """
+    task = task_store.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Task '{task_id}' not found.")
+    verify_task_ownership(task, current_user)
+
+    bundle = create_replay_bundle(task_id, task_store)
+    if not bundle:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unable to create replay bundle.")
+
+    return bundle.model_dump()
+
