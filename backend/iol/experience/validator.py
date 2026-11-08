@@ -15,6 +15,7 @@ ALLOWED_COMPONENT_TYPES: Set[str] = {
     "form_draft",
     "timeline_view",
     "action_panel",
+    "document_preview",
 }
 
 MAX_COMPONENTS_PER_PLAN = 15

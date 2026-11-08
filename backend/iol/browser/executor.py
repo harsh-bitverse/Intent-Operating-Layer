@@ -133,21 +133,45 @@ class BrowserActionExecutor:
                 session.navigation_history.append(current_url)
 
             elif action.action_type == BrowserActionType.CLICK:
-                if not action.selector:
-                    raise ValueError("Selector must be provided for click action.")
-                await page.click(action.selector, timeout=action.timeout_ms)
+                if not action.selector and not action.text:
+                    raise ValueError("Selector or text must be provided for click action.")
+                try:
+                    if action.selector:
+                        await page.click(action.selector, timeout=action.timeout_ms)
+                    elif action.text:
+                        await page.get_by_text(action.text, exact=False).first.click(timeout=action.timeout_ms)
+                except Exception as click_err:
+                    logger.warning(f"Initial click failed: {click_err}. Attempting retry/recovery...")
+                    await page.wait_for_timeout(400)
+                    if action.selector:
+                        await page.locator(action.selector).first.click(timeout=action.timeout_ms)
+                    elif action.text:
+                        await page.get_by_role("button", name=action.text).click(timeout=action.timeout_ms)
                 await page.wait_for_timeout(500)
 
             elif action.action_type == BrowserActionType.FILL:
                 if not action.selector:
                     raise ValueError("Selector must be provided for fill action.")
                 val = action.value or action.text or ""
-                await page.fill(action.selector, val, timeout=action.timeout_ms)
+                try:
+                    await page.fill(action.selector, val, timeout=action.timeout_ms)
+                except Exception as fill_err:
+                    logger.warning(f"Initial fill failed: {fill_err}. Attempting retry/recovery...")
+                    await page.wait_for_timeout(400)
+                    await page.locator(action.selector).first.fill(val, timeout=action.timeout_ms)
 
             elif action.action_type == BrowserActionType.SELECT:
                 if not action.selector:
                     raise ValueError("Selector must be provided for select action.")
-                await page.select_option(action.selector, value=action.value, timeout=action.timeout_ms)
+                val = action.value or action.text or ""
+                try:
+                    await page.select_option(action.selector, value=val, timeout=action.timeout_ms)
+                except Exception:
+                    try:
+                        await page.select_option(action.selector, label=val, timeout=action.timeout_ms)
+                    except Exception:
+                        await page.wait_for_timeout(400)
+                        await page.locator(action.selector).first.select_option(value=val, timeout=action.timeout_ms)
 
             elif action.action_type == BrowserActionType.PRESS:
                 key = action.key or "Enter"
@@ -273,7 +297,7 @@ class BrowserActionExecutor:
                     const interactive = document.querySelectorAll('button, a[href], input, select, textarea, h1, h2');
                     let count = 0;
                     for (const el of interactive) {
-                        if (count >= 25) break;
+                        if (count >= 35) break;
                         const rect = el.getBoundingClientRect();
                         if (rect.width === 0 || rect.height === 0) continue;
                         
@@ -285,6 +309,8 @@ class BrowserActionExecutor:
                         let selector = '';
                         if (el.id) {
                             selector = '#' + el.id;
+                        } else if (el.getAttribute('data-testid')) {
+                            selector = '[data-testid="' + el.getAttribute('data-testid') + '"]';
                         } else if (el.name) {
                             selector = tag + '[name="' + el.name + '"]';
                         } else if (tag === 'a' && el.getAttribute('href')) {
@@ -293,12 +319,20 @@ class BrowserActionExecutor:
                             selector = tag;
                         }
 
+                        let options = [];
+                        if (tag === 'select' && el.options) {
+                            options = Array.from(el.options).map(o => ({ value: o.value, text: o.text.trim() }));
+                        }
+
                         results.push({
                             tag: tag,
                             role: role,
                             text: text,
                             selector: selector,
-                            href: el.getAttribute('href') || null
+                            href: el.getAttribute('href') || null,
+                            input_type: el.type || null,
+                            checked: !!el.checked,
+                            options: options
                         });
                         count++;
                     }

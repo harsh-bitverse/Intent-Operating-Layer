@@ -204,3 +204,43 @@ export interface TaskActionRequest {
   explanation: string;
   ticket?: ActionApprovalTicket;
 }
+
+// ---------------------------------------------------------------------------
+// Timeline View Component Props
+// ---------------------------------------------------------------------------
+
+export interface TimelineItem {
+  id: string;
+  title: string;
+  description?: string;
+  timestamp?: string;
+  status?: 'completed' | 'active' | 'pending' | 'failed';
+  badge?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface TimelineViewProps {
+  title?: string;
+  subtitle?: string;
+  items: TimelineItem[];
+  current_stage?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Document Preview Component Props
+// ---------------------------------------------------------------------------
+
+export interface DocumentSection {
+  heading: string;
+  text: string;
+}
+
+export interface DocumentPreviewProps {
+  title?: string;
+  document_type?: string;
+  content?: string;
+  sections?: DocumentSection[];
+  metadata?: Record<string, any>;
+  download_url?: string;
+}
+

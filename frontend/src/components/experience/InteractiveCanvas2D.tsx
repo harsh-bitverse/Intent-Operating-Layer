@@ -5,6 +5,7 @@ import { NeuralCanvasProps, NeuralSimulationStep } from '../../types/experience'
 
 export default function InteractiveCanvas2D({
   title = 'Interactive 2D Neural Network Learning Simulation',
+  architecture,
   nodes: initialNodes = [],
   edges: initialEdges = [],
   current_step: defaultStep = 0,
@@ -51,26 +52,66 @@ export default function InteractiveCanvas2D({
     formula: 'W := W - η · ∇_W L'
   };
 
-  // Node positions on the 2D canvas
-  const nodeLayout = [
-    { id: 'x1', label: 'Input x₁', layer: 'input', cx: 120, cy: 120, val: activeStepDetail.activations?.x1 ?? inputX1 },
-    { id: 'x2', label: 'Input x₂', layer: 'input', cx: 120, cy: 280, val: activeStepDetail.activations?.x2 ?? inputX2 },
-    { id: 'h1', label: 'Hidden h₁', layer: 'hidden', cx: 380, cy: 120, val: activeStepDetail.activations?.h1 ?? 0.701, bias: 0.1 },
-    { id: 'h2', label: 'Hidden h₂', layer: 'hidden', cx: 380, cy: 280, val: activeStepDetail.activations?.h2 ?? 0.490, bias: -0.2 },
-    { id: 'y_out', label: 'Output ŷ', layer: 'output', cx: 640, cy: 200, val: activeStepDetail.activations?.y_out ?? 0.570, bias: 0.05 },
-  ];
+  const isCustomGraph =
+    (architecture as any)?.type === 'DIJKSTRA_GRAPH' ||
+    (architecture as any)?.type === 'GRAPH_SIMULATION' ||
+    (initialNodes && initialNodes.length > 0 && !initialNodes.some((n: any) => n.id === 'x1'));
 
   // Dynamic weights from current step
   const weightsMap = activeStepDetail.weights || {};
 
-  const edges = [
-    { id: 'e1', x1: 120, y1: 120, x2: 380, y2: 120, w: weightsMap.w_x1_h1 ?? 0.45 },
-    { id: 'e2', x1: 120, y1: 120, x2: 380, y2: 280, w: weightsMap.w_x1_h2 ?? -0.32 },
-    { id: 'e3', x1: 120, y1: 280, x2: 380, y2: 120, w: weightsMap.w_x2_h1 ?? 0.78 },
-    { id: 'e4', x1: 120, y1: 280, x2: 380, y2: 280, w: weightsMap.w_x2_h2 ?? 0.15 },
-    { id: 'e5', x1: 380, y1: 120, x2: 640, y2: 200, w: weightsMap.w_h1_y ?? 0.85 },
-    { id: 'e6', x1: 380, y1: 280, x2: 640, y2: 200, w: weightsMap.w_h2_y ?? -0.65 },
-  ];
+  // Node positions on the 2D canvas (adaptive for arbitrary topologies)
+  const nodeLayout = isCustomGraph
+    ? initialNodes.map((n: any, idx: number) => {
+        const count = initialNodes.length;
+        const cx = n.cx ?? n.x ?? (count <= 6 ? 120 + (idx % 3) * 250 : 100 + (idx % 4) * 180);
+        const cy = n.cy ?? n.y ?? (count <= 6 ? 130 + Math.floor(idx / 3) * 160 : 100 + Math.floor(idx / 4) * 120);
+        const rawVal = activeStepDetail.activations?.[n.id] ?? (activeStepDetail as any).distances?.[n.id] ?? n.value ?? n.val ?? '';
+        return {
+          id: n.id,
+          label: n.label || n.id,
+          layer: n.layer || (idx === 0 ? 'input' : idx === count - 1 ? 'output' : 'hidden'),
+          cx,
+          cy,
+          val: rawVal,
+          bias: n.bias,
+        };
+      })
+    : [
+        { id: 'x1', label: 'Input x₁', layer: 'input', cx: 120, cy: 120, val: activeStepDetail.activations?.x1 ?? inputX1 },
+        { id: 'x2', label: 'Input x₂', layer: 'input', cx: 120, cy: 280, val: activeStepDetail.activations?.x2 ?? inputX2 },
+        { id: 'h1', label: 'Hidden h₁', layer: 'hidden', cx: 380, cy: 120, val: activeStepDetail.activations?.h1 ?? 0.701, bias: 0.1 },
+        { id: 'h2', label: 'Hidden h₂', layer: 'hidden', cx: 380, cy: 280, val: activeStepDetail.activations?.h2 ?? 0.490, bias: -0.2 },
+        { id: 'y_out', label: 'Output ŷ', layer: 'output', cx: 640, cy: 200, val: activeStepDetail.activations?.y_out ?? 0.570, bias: 0.05 },
+      ];
+
+  const edges = isCustomGraph
+    ? (initialEdges || []).map((e: any, idx: number) => {
+        const srcNode = nodeLayout.find((n) => n.id === (e.source || e.src || e.x1_id));
+        const tgtNode = nodeLayout.find((n) => n.id === (e.target || e.dst || e.x2_id));
+        const x1 = e.x1 ?? (srcNode ? srcNode.cx : 120);
+        const y1 = e.y1 ?? (srcNode ? srcNode.cy : 120);
+        const x2 = e.x2 ?? (tgtNode ? tgtNode.cx : 380);
+        const y2 = e.y2 ?? (tgtNode ? tgtNode.cy : 120);
+        const rawW = weightsMap[e.id] ?? e.weight ?? e.w ?? 1.0;
+        return {
+          id: e.id || `edge_${idx}`,
+          x1,
+          y1,
+          x2,
+          y2,
+          w: typeof rawW === 'number' ? rawW : 1.0,
+          label: e.label || (typeof rawW === 'number' ? (rawW > 0 ? `+${rawW.toFixed(2)}` : rawW.toFixed(2)) : String(rawW)),
+        };
+      })
+    : [
+        { id: 'e1', x1: 120, y1: 120, x2: 380, y2: 120, w: weightsMap.w_x1_h1 ?? 0.45 },
+        { id: 'e2', x1: 120, y1: 120, x2: 380, y2: 280, w: weightsMap.w_x1_h2 ?? -0.32 },
+        { id: 'e3', x1: 120, y1: 280, x2: 380, y2: 120, w: weightsMap.w_x2_h1 ?? 0.78 },
+        { id: 'e4', x1: 120, y1: 280, x2: 380, y2: 280, w: weightsMap.w_x2_h2 ?? 0.15 },
+        { id: 'e5', x1: 380, y1: 120, x2: 640, y2: 200, w: weightsMap.w_h1_y ?? 0.85 },
+        { id: 'e6', x1: 380, y1: 280, x2: 640, y2: 200, w: weightsMap.w_h2_y ?? -0.65 },
+      ];
 
   const handleStepForward = () => {
     if (currentStep < totalSteps - 1) {
@@ -89,6 +130,10 @@ export default function InteractiveCanvas2D({
     setCurrentStep(0);
   };
 
+  const archType = (activeStepDetail as any).architecture_type || (isCustomGraph ? 'Graph Topology & Algorithm Simulation' : '2-Layer Perceptron (2-2-1)');
+  const metricLabel = (activeStepDetail as any).metric_label || 'Loss';
+  const metricVal = (activeStepDetail as any).metric_value ?? (activeStepDetail.loss !== undefined ? (activeStepDetail.loss ?? initial_loss).toFixed(4) : 'Optimal');
+
   return (
     <div className="bg-slate-900 border border-slate-700/80 rounded-xl p-5 shadow-2xl space-y-5" data-testid="interactive-canvas-2d">
       {/* Header & Status */}
@@ -98,11 +143,11 @@ export default function InteractiveCanvas2D({
             <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse" />
             <h3 className="text-lg font-semibold text-white tracking-wide">{title}</h3>
             <span className="px-2 py-0.5 text-xs font-mono bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 rounded">
-              2-Layer Perceptron (2-2-1)
+              {archType}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Real mathematical backpropagation with floating-point gradient updates & MSE loss reduction.
+            {explanation || 'Interactive 2D graph computation with real mathematical state transitions and step-by-step playback.'}
           </p>
         </div>
 
@@ -112,9 +157,7 @@ export default function InteractiveCanvas2D({
             Step <span className="text-cyan-400 font-bold">{currentStep + 1}</span> of {totalSteps}
           </div>
           <div className="px-3 py-1 bg-slate-800/90 border border-slate-700 rounded-lg text-xs font-mono text-slate-300">
-            Loss: <span className={`font-bold ${currentStep >= 4 ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {(activeStepDetail.loss ?? initial_loss).toFixed(4)}
-            </span>
+            {metricLabel}: <span className="font-bold text-emerald-400 font-mono">{String(metricVal)}</span>
           </div>
         </div>
       </div>
@@ -141,17 +184,30 @@ export default function InteractiveCanvas2D({
             </filter>
           </defs>
 
-          {/* Layer Background Guides */}
-          <rect x="70" y="40" width="100" height="320" rx="8" fill="#0f172a" fillOpacity="0.4" stroke="#1e293b" strokeDasharray="3 3" />
-          <text x="120" y="65" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600" letterSpacing="1">INPUT LAYER</text>
+          {/* Layer Background Guides for neural net; subtle grid for custom graph */}
+          {!isCustomGraph ? (
+            <>
+              <rect x="70" y="40" width="100" height="320" rx="8" fill="#0f172a" fillOpacity="0.4" stroke="#1e293b" strokeDasharray="3 3" />
+              <text x="120" y="65" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600" letterSpacing="1">INPUT LAYER</text>
 
-          <rect x="330" y="40" width="100" height="320" rx="8" fill="#0f172a" fillOpacity="0.4" stroke="#1e293b" strokeDasharray="3 3" />
-          <text x="380" y="65" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600" letterSpacing="1">HIDDEN LAYER</text>
+              <rect x="330" y="40" width="100" height="320" rx="8" fill="#0f172a" fillOpacity="0.4" stroke="#1e293b" strokeDasharray="3 3" />
+              <text x="380" y="65" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600" letterSpacing="1">HIDDEN LAYER</text>
 
-          <rect x="590" y="40" width="100" height="320" rx="8" fill="#0f172a" fillOpacity="0.4" stroke="#1e293b" strokeDasharray="3 3" />
-          <text x="640" y="65" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600" letterSpacing="1">OUTPUT LAYER</text>
+              <rect x="590" y="40" width="100" height="320" rx="8" fill="#0f172a" fillOpacity="0.4" stroke="#1e293b" strokeDasharray="3 3" />
+              <text x="640" y="65" textAnchor="middle" fill="#64748b" fontSize="11" fontWeight="600" letterSpacing="1">OUTPUT LAYER</text>
+            </>
+          ) : (
+            <g opacity="0.15">
+              <line x1="0" y1="100" x2="760" y2="100" stroke="#475569" strokeDasharray="4 4" />
+              <line x1="0" y1="200" x2="760" y2="200" stroke="#475569" strokeDasharray="4 4" />
+              <line x1="0" y1="300" x2="760" y2="300" stroke="#475569" strokeDasharray="4 4" />
+              <line x1="190" y1="0" x2="190" y2="400" stroke="#475569" strokeDasharray="4 4" />
+              <line x1="380" y1="0" x2="380" y2="400" stroke="#475569" strokeDasharray="4 4" />
+              <line x1="570" y1="0" x2="570" y2="400" stroke="#475569" strokeDasharray="4 4" />
+            </g>
+          )}
 
-          {/* Edges (Synapses) */}
+          {/* Edges (Synapses / Connections) */}
           {edges.map((e) => {
             const isPositive = e.w >= 0;
             const strokeColor = isPositive ? '#10b981' : '#f43f5e';
@@ -341,41 +397,56 @@ export default function InteractiveCanvas2D({
           </button>
         </div>
 
-        {/* Feature Sliders */}
-        <div className="flex items-center gap-4 text-xs font-mono text-slate-300 bg-slate-950/60 p-2 rounded-lg border border-slate-800">
-          <div className="flex items-center gap-2">
-            <span>x₁:</span>
-            <input
-              type="range"
-              min="0.0"
-              max="1.0"
-              step="0.05"
-              value={inputX1}
-              onChange={(e) => setInputX1(parseFloat(e.target.value))}
-              className="w-16 accent-sky-400 cursor-pointer"
-            />
-            <span className="text-sky-300 font-bold">{inputX1.toFixed(2)}</span>
-          </div>
+        {/* Feature Sliders or Graph Metadata */}
+        {!isCustomGraph ? (
+          <div className="flex items-center gap-4 text-xs font-mono text-slate-300 bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+            <div className="flex items-center gap-2">
+              <span>x₁:</span>
+              <input
+                type="range"
+                min="0.0"
+                max="1.0"
+                step="0.05"
+                value={inputX1}
+                onChange={(e) => setInputX1(parseFloat(e.target.value))}
+                className="w-16 accent-sky-400 cursor-pointer"
+              />
+              <span className="text-sky-300 font-bold">{inputX1.toFixed(2)}</span>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <span>x₂:</span>
-            <input
-              type="range"
-              min="0.0"
-              max="1.0"
-              step="0.05"
-              value={inputX2}
-              onChange={(e) => setInputX2(parseFloat(e.target.value))}
-              className="w-16 accent-sky-400 cursor-pointer"
-            />
-            <span className="text-sky-300 font-bold">{inputX2.toFixed(2)}</span>
-          </div>
+            <div className="flex items-center gap-2">
+              <span>x₂:</span>
+              <input
+                type="range"
+                min="0.0"
+                max="1.0"
+                step="0.05"
+                value={inputX2}
+                onChange={(e) => setInputX2(parseFloat(e.target.value))}
+                className="w-16 accent-sky-400 cursor-pointer"
+              />
+              <span className="text-sky-300 font-bold">{inputX2.toFixed(2)}</span>
+            </div>
 
-          <div className="flex items-center gap-2 border-l border-slate-800 pl-3">
-            <span>η (LR):</span>
-            <span className="text-cyan-300 font-bold">0.10</span>
+            <div className="flex items-center gap-2 border-l border-slate-800 pl-3">
+              <span>η (LR):</span>
+              <span className="text-cyan-300 font-bold">0.10</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 text-xs font-mono text-slate-300 bg-slate-950/60 p-2 rounded-lg border border-slate-800">
+            <span className="text-slate-400">Topology:</span>
+            <span className="text-cyan-300 font-bold">{nodeLayout.length} Vertices</span>
+            <span className="text-slate-600">|</span>
+            <span className="text-cyan-300 font-bold">{edges.length} Edges</span>
+            {(activeStepDetail as any).active_vertex && (
+              <>
+                <span className="text-slate-600">|</span>
+                <span className="text-emerald-400 font-semibold">Active: {(activeStepDetail as any).active_vertex}</span>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

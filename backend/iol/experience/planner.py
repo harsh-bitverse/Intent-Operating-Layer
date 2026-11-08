@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 from backend.iol.experience.models import ExperiencePlan
 from backend.iol.experience.recipes import experience_recipe_store
 from backend.iol.experience.gateway import model_provider_gateway
+from backend.iol.experience.knowledge import experience_knowledge_store
 
 
 class ExperiencePlanner:
@@ -15,6 +16,7 @@ class ExperiencePlanner:
 
     def __init__(self):
         self.recipe_store = experience_recipe_store
+        self.knowledge_store = experience_knowledge_store
 
     def plan_experience(
         self,
@@ -46,7 +48,36 @@ class ExperiencePlanner:
             except Exception:
                 pass
 
-        # 2. Recipe adaptation / deterministic fallback path
+        # 2. Check for knowledge store cross-domain pattern adaptation
+        intent_lower = intent.lower()
+        if context_metadata and context_metadata.get("adapt_knowledge") and (" vs " in intent_lower or " versus " in intent_lower or "compare " in intent_lower):
+            parts = None
+            if " vs " in intent_lower:
+                parts = intent_lower.split(" vs ", 1)
+            elif " versus " in intent_lower:
+                parts = intent_lower.split(" versus ", 1)
+            elif "compare " in intent_lower and " and " in intent_lower:
+                parts = intent_lower.replace("compare ", "", 1).split(" and ", 1)
+
+            if parts and len(parts) == 2:
+                e1 = parts[0].strip().split()[-1].title()
+                e2 = parts[1].strip().split()[0].title()
+                domain = "technology_architecture"
+                if any(w in intent_lower for w in ["database", "sql", "nosql"]):
+                    domain = "database_systems"
+                elif any(w in intent_lower for w in ["build", "bundler", "compiler", "vite", "webpack"]):
+                    domain = "build_systems"
+                adapted_plan = self.knowledge_store.adapt_pattern_cross_domain(
+                    source_record_id="pat_comparison_matrix",
+                    target_intent=intent,
+                    target_domain=domain,
+                    target_entity_names=(e1, e2),
+                    task_id=task_id
+                )
+                if adapted_plan:
+                    return adapted_plan
+
+        # 3. Recipe adaptation / deterministic fallback path
         entity_type = None
         custom_columns = None
 

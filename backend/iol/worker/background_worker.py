@@ -496,6 +496,66 @@ class BackgroundWorker:
                             m["value"] = "Completed (5 Steps)"
                             m["badge_color"] = "emerald"
 
+        elif cap_id == "educational.dijkstra_simulation":
+            optimal_path_str = " -> ".join(data.get("optimal_path", ["A", "C", "B", "E"]))
+            optimal_cost = data.get("optimal_cost", 7.0)
+            ui_root.summary = f"Dijkstra simulation complete: Optimal path {optimal_path_str} found with total cost {optimal_cost}."
+            self._update_ui_metric(ui_root, "Status", "COMPLETED")
+            for comp in ui_root.components:
+                if isinstance(comp, TableComponent) and comp.id == "candidate_table":
+                    comp.title = "Dijkstra Step-by-Step Priority Queue Relaxation"
+                    comp.columns = [
+                        TableColumn(key="phase", header="Phase / Step", type="text"),
+                        TableColumn(key="description", header="Relaxation Description", type="text"),
+                        TableColumn(key="activations", header="Distance Vector", type="text"),
+                        TableColumn(key="formula", header="Governing Formula", type="text"),
+                    ]
+                    comp.rows = [
+                        {
+                            "phase": s.get("phase"),
+                            "description": s.get("description"),
+                            "activations": str(s.get("activations")),
+                            "formula": s.get("formula"),
+                            "confidence": 1.0,
+                            "status": "SETTLED"
+                        }
+                        for s in data.get("steps_detail", [])
+                    ]
+            if outcome_env:
+                outcome_env.shape = OutcomeShape.SIMULATION
+                outcome_env.source_mode = SourceMode.LOCAL_COMPUTATION
+                outcome_env.summary = f"Dijkstra algorithm shortest path simulation: {optimal_path_str} (Cost: {optimal_cost})."
+                outcome_env.field_schema = [
+                    OutcomeFieldSchema(key="phase", header="Phase / Step", type="text", role="category"),
+                    OutcomeFieldSchema(key="description", header="Relaxation Description", type="text"),
+                    OutcomeFieldSchema(key="formula", header="Governing Formula", type="text"),
+                ]
+                outcome_env.items = [
+                    OutcomeItem(
+                        id=f"dijkstra_step_{s.get('step_idx', idx)}",
+                        fields={
+                            "phase": s.get("phase"),
+                            "description": s.get("description"),
+                            "formula": s.get("formula"),
+                        },
+                        status="CALCULATED"
+                    )
+                    for idx, s in enumerate(data.get("steps_detail", []))
+                ]
+                outcome_env.revision += 1
+            if exp_plan:
+                exp_plan.update_component_props("interactive_canvas_main", data)
+                exp_plan.update_component_props("model_interactive_canvas", data)
+                metric_comp = exp_plan.get_component("metric_strip_main") or exp_plan.get_component("model_metrics_strip")
+                if metric_comp:
+                    for m in metric_comp.props.get("metrics", []):
+                        if "Cost" in m.get("label", "") or "Optimal" in m.get("label", ""):
+                            m["value"] = str(optimal_cost)
+                            m["badge_color"] = "emerald"
+                        elif "Status" in m.get("label", ""):
+                            m["value"] = "COMPLETED"
+                            m["badge_color"] = "emerald"
+
         elif cap_id == "research.live_source_acquisition":
             sources = data.get("sources", [])
             provider_used = data.get("provider_used", "direct_apis")

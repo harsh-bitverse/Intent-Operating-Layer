@@ -36,6 +36,29 @@ class AdaptiveCapabilityPlanner(BaseAgentAdapter):
         cap_ids = {c.capability_id for c in available_capabilities}
         intent_lower = intent.lower()
 
+        # Algorithmic Graph Simulation Planning (Task 011 Phase 6C)
+        graph_keywords = ["dijkstra", "shortest path", "graph algorithm", "graph simulation", "relaxation"]
+        if "educational.dijkstra_simulation" in cap_ids and any(kw in intent_lower for kw in graph_keywords):
+            steps = [
+                PlanStep(
+                    step_id="step_dijkstra_simulation",
+                    capability_id="educational.dijkstra_simulation",
+                    title="Dijkstra Shortest Path Graph Simulation",
+                    description="Compute step-by-step priority queue distance relaxation and optimal path reconstruction.",
+                    parameters={
+                        "start_vertex": "A",
+                        "target_vertex": "E",
+                        "vertices": ["A", "B", "C", "D", "E"]
+                    }
+                )
+            ]
+            return ExecutionPlan(
+                plan_id=f"plan_{uuid.uuid4().hex[:8]}",
+                intent=intent,
+                rationale="Simulate step-by-step Dijkstra shortest path relaxation and path reconstruction.",
+                steps=steps
+            )
+
         # Educational & Simulation Intent Planning
         educational_keywords = ["teach", "neural network", "learns", "simulation", "perceptron", "gradient descent", "backpropagation"]
         if "educational.neural_simulation" in cap_ids and any(kw in intent_lower for kw in educational_keywords):

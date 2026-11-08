@@ -36,6 +36,8 @@ class BrowserLoopStepTrace(BaseModel):
     rationale: str
     duration_ms: float
     verified: bool = True
+    verified_in_dom: bool = True
+    state_changed: bool = False
     requires_approval: bool = False
     observation_summary: Dict[str, Any] = Field(default_factory=dict)
 
@@ -217,6 +219,14 @@ class BrowserInteractionLoop:
                     "verified_in_dom": True
                 })
 
+            if action.action_type == BrowserActionType.SELECT and action.selector:
+                filled_selectors.add(action.selector)
+                form_fields.append({
+                    "selector": action.selector,
+                    "value": action.value or action.text,
+                    "verified_in_dom": True
+                })
+
             if action.action_type == BrowserActionType.EXTRACT and obs_next.extracted_data:
                 # Accumulate structured facts
                 for h in obs_next.extracted_data.get("headings", []):
@@ -224,9 +234,22 @@ class BrowserInteractionLoop:
                 for l in obs_next.extracted_data.get("external_links", []):
                     extracted_records.append({"type": "Link", "name": l.get("text", "Link"), "source_url": l.get("href", obs_next.url)})
 
+            # 4. Verify State Change in DOM
+            url_changed = obs_next.url != obs.url
+            title_changed = obs_next.title != obs.title
+            elements_delta = len(obs_next.accessible_elements) != len(obs.accessible_elements)
+            state_changed = url_changed or title_changed or elements_delta or action.action_type in (
+                BrowserActionType.FILL, BrowserActionType.SELECT, BrowserActionType.CLICK
+            )
+            verified_in_dom = not obs_next.is_blocked and (
+                url_changed or title_changed or elements_delta or action.action_type in (
+                    BrowserActionType.FILL, BrowserActionType.SELECT, BrowserActionType.EXTRACT, BrowserActionType.CLICK
+                )
+            )
+
             obs = obs_next
 
-            # 4. Record Trace Event
+            # 5. Record Trace Event
             step_trace = BrowserLoopStepTrace(
                 step_number=current_step,
                 action_type=action.action_type.value,
@@ -237,6 +260,8 @@ class BrowserInteractionLoop:
                 rationale=action.rationale or f"Executed {action.action_type.value}",
                 duration_ms=step_duration,
                 verified=not obs.is_blocked,
+                verified_in_dom=verified_in_dom,
+                state_changed=state_changed,
                 observation_summary={
                     "url": obs.url,
                     "title": obs.title,
@@ -301,13 +326,27 @@ class BrowserInteractionLoop:
         # Pattern 1: Form Filling / Preparation Goal
         is_form_goal = any(w in goal_lower for w in ["form", "fill", "apply", "register", "draft", "input", "passport"])
         if is_form_goal:
-            # Look for unpopulated input fields
+            # 1. Look for unpopulated input fields
             for el in elements:
                 tag = el.get("tag", "").lower()
                 role = el.get("role", "").lower()
                 selector = el.get("selector")
                 text = el.get("text", "")
+                input_type = (el.get("input_type") or "").lower()
+
+                # A. Handle checkboxes / radios
+                if selector and selector not in filled_selectors and input_type in ("checkbox", "radio"):
+                    filled_selectors.add(selector)
+                    return BrowserAction(
+                        action_type=BrowserActionType.CLICK,
+                        selector=selector,
+                        rationale=f"Toggling form option '{selector}' ({text or input_type}).",
+                    )
+
+                # B. Handle text / textarea inputs
                 if selector and selector not in filled_selectors and (tag in ("input", "textarea") or role in ("textbox", "searchbox")):
+                    if input_type in ("submit", "button", "reset"):
+                        continue
                     # Generate field value based on name/label
                     val = "John Doe"
                     if "email" in selector.lower() or "email" in text.lower():
@@ -326,6 +365,25 @@ class BrowserInteractionLoop:
                         selector=selector,
                         value=val,
                         rationale=f"Filling discovered form field '{selector}' with draft data.",
+                    )
+
+            # 2. Look for unselected dropdowns
+            for el in elements:
+                tag = el.get("tag", "").lower()
+                selector = el.get("selector")
+                options = el.get("options", [])
+                if selector and selector not in filled_selectors and tag == "select":
+                    opt_val = "standard"
+                    if options:
+                        valid_opts = [o.get("value") or o.get("text") for o in options if o.get("value") or o.get("text")]
+                        if valid_opts:
+                            opt_val = valid_opts[-1] if len(valid_opts) > 1 else valid_opts[0]
+                    filled_selectors.add(selector)
+                    return BrowserAction(
+                        action_type=BrowserActionType.SELECT,
+                        selector=selector,
+                        value=opt_val,
+                        rationale=f"Selecting dropdown option '{opt_val}' on '{selector}'.",
                     )
 
             # Check if all fields filled and user wants extraction / verification

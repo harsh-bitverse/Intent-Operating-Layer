@@ -7,6 +7,8 @@ import WorkspaceDataGrid from './WorkspaceDataGrid';
 import FormDraft from './FormDraft';
 import ActionPanel from './ActionPanel';
 import BrowserTelemetryCard from './BrowserTelemetryCard';
+import TimelineView from './TimelineView';
+import DocumentPreview from './DocumentPreview';
 
 interface ExperienceRendererProps {
   plan: ExperiencePlan;
@@ -157,6 +159,14 @@ export default function ExperienceRenderer({
 
           if (comp.type === 'form_draft') {
             return <FormDraft key={comp.id} {...(comp.props as any)} />;
+          }
+
+          if (comp.type === 'timeline_view' || comp.type === 'timeline') {
+            return <TimelineView key={comp.id} {...(comp.props as any)} />;
+          }
+
+          if (comp.type === 'document_preview') {
+            return <DocumentPreview key={comp.id} {...(comp.props as any)} />;
           }
 
           if (comp.type === 'action_panel') {
