@@ -118,7 +118,8 @@ class ExperiencePlanner:
         plan.version = 1
         plan.model_metadata = {
             "provider": None,
-            "origin_reason": "No active external LLM credentials configured; safely adapted verified declarative layout template.",
+            "status": "MODEL_GENERATION_BLOCKED",
+            "origin_reason": "No active external LLM credentials configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, or OLLAMA_HOST missing); safely adapted verified declarative layout template.",
             "recipe_id": recipe.recipe_id
         }
 

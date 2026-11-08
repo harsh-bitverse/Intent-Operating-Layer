@@ -68,13 +68,44 @@ class BrowserSessionManager:
         self._playwright: Optional[Playwright] = None
         self._browser: Optional[Browser] = None
         self._sessions: Dict[str, BrowserSessionRecord] = {}
-        self._lock = asyncio.Lock()
+        self._lock: Optional[asyncio.Lock] = None
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
 
-    async def _ensure_browser(self):
-        """Initializes headless Chromium browser if not already running."""
+    def _get_lock(self) -> asyncio.Lock:
+        try:
+            current_loop = asyncio.get_running_loop()
+        except RuntimeError:
+            current_loop = None
+
+        if self._lock is None or self._loop != current_loop:
+            self._lock = asyncio.Lock()
+            self._loop = current_loop
+        return self._lock
+
+    async def _ensure_browser(self, force: bool = False):
+        """Initializes headless Chromium browser if not already running on the active event loop."""
+        current_loop = asyncio.get_running_loop()
+        if self._loop != current_loop:
+            self._sessions.clear()
+            self._browser = None
+            self._playwright = None
+            self._loop = current_loop
+
+        if force:
+            self._browser = None
+            self._playwright = None
+
         if not self._playwright:
             self._playwright = await async_playwright().start()
-        if not self._browser or not self._browser.is_connected():
+
+        is_connected = False
+        if self._browser:
+            try:
+                is_connected = self._browser.is_connected()
+            except Exception:
+                is_connected = False
+
+        if not self._browser or not is_connected:
             self._browser = await self._playwright.chromium.launch(
                 headless=True,
                 args=[
@@ -98,7 +129,7 @@ class BrowserSessionManager:
         Retrieves or allocates an isolated BrowserContext for the specified tenant and task.
         """
         key = self._session_key(tenant_id, task_id)
-        async with self._lock:
+        async with self._get_lock():
             await self._ensure_browser()
 
             # Return existing session if active and healthy
@@ -119,14 +150,24 @@ class BrowserSessionManager:
                 logger.warning(f"Evicting oldest browser session '{oldest_key}' to stay within budget.")
                 await self._close_session_unlocked(oldest_key)
 
-            # Create new strictly isolated BrowserContext
+            # Create new strictly isolated BrowserContext with retry on stale connection
             session_id = f"bsess_{uuid.uuid4().hex[:12]}"
-            context = await self._browser.new_context(
-                viewport={"width": 1280, "height": 800},
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 (IOL-Research-Agent/0.6)",
-                java_script_enabled=True,
-                ignore_https_errors=False,
-            )
+            try:
+                context = await self._browser.new_context(
+                    viewport={"width": 1280, "height": 800},
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 (IOL-Research-Agent/0.6)",
+                    java_script_enabled=True,
+                    ignore_https_errors=False,
+                )
+            except Exception as e:
+                logger.warning(f"Initial context creation failed ({e}); forcing fresh browser instance...")
+                await self._ensure_browser(force=True)
+                context = await self._browser.new_context(
+                    viewport={"width": 1280, "height": 800},
+                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36 (IOL-Research-Agent/0.6)",
+                    java_script_enabled=True,
+                    ignore_https_errors=False,
+                )
 
             # Enforce request-level SSRF block in route handler
             await context.route("**/*", self._route_interceptor)
@@ -175,12 +216,12 @@ class BrowserSessionManager:
     async def close_session(self, tenant_id: str, task_id: str):
         """Explicitly tears down a session when a task finishes or is canceled."""
         key = self._session_key(tenant_id, task_id)
-        async with self._lock:
+        async with self._get_lock():
             await self._close_session_unlocked(key)
 
     async def close_all(self):
         """Tears down all active sessions and the Chromium browser instance."""
-        async with self._lock:
+        async with self._get_lock():
             keys = list(self._sessions.keys())
             for k in keys:
                 await self._close_session_unlocked(k)

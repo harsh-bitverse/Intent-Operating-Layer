@@ -10,7 +10,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 import urllib.request
 import urllib.error
 
@@ -109,9 +109,11 @@ class ModelProviderGateway:
 
         t0 = time.perf_counter()
         try:
-            raw_plan_dict = await self._call_provider(provider_info, intent, expected_shape)
-            if not raw_plan_dict:
+            call_result = await self._call_provider(provider_info, intent, expected_shape)
+            if not call_result:
                 return None
+
+            raw_plan_dict, usage_info = call_result
 
             # Add required identifiers if missing
             raw_plan_dict["task_id"] = task_id
@@ -124,12 +126,14 @@ class ModelProviderGateway:
             latency_ms = round((time.perf_counter() - t0) * 1000, 2)
             raw_plan_dict["model_metadata"] = {
                 "provider": provider_info["provider"],
-                "model": provider_info["model"],
+                "model": provider_info.get("model", "unknown"),
+                "status": "SUCCESS",
                 "latency_ms": latency_ms,
+                "usage": usage_info or {},
                 "generated_at": datetime.now(timezone.utc).isoformat(),
             }
 
-            # Parse and strictly validate
+            # Parse and strictly validate against the catalog
             plan = ExperiencePlan(**raw_plan_dict)
             is_valid, validation_errors = experience_plan_validator.validate_plan(plan)
             if not is_valid:
@@ -150,7 +154,7 @@ class ModelProviderGateway:
         provider_info: Dict[str, str],
         intent: str,
         expected_shape: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Tuple[Dict[str, Any], Dict[str, Any]]]:
         """Makes an HTTP POST request to the provider endpoint with JSON schema output prompt."""
         system_prompt = (
             "You are the Intent Operating Layer Experience Planner. "
@@ -166,45 +170,128 @@ class ModelProviderGateway:
             "Generate an optimal ExperiencePlan layout with appropriate metric_strip and data_grid/comparison_matrix."
         )
 
-        base_url = provider_info["base_url"].rstrip("/")
-        api_key = provider_info["api_key"]
-        model = provider_info["model"]
+        base_url = provider_info.get("base_url", "https://api.openai.com/v1").rstrip("/")
+        api_key = provider_info.get("api_key", "")
+        model = provider_info.get("model", "gpt-4o-mini")
+        provider_type = provider_info.get("provider", "openai")
 
-        # OpenAI-compatible completions format
-        endpoint = f"{base_url}/chat/completions"
-        payload = {
-            "model": model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content},
-            ],
-            "response_format": {"type": "json_object"},
-            "temperature": 0.2,
-            "max_tokens": 1500,
-        }
+        # Test/Mock provider for verified offline integration testing
+        if provider_type in ("mock", "test_mock"):
+            mock_plan = {
+                "mode": "FULL_WORKSPACE",
+                "title": f"Generative Workspace: {intent[:50]}",
+                "subtitle": f"Model-directed workspace tailored for {expected_shape} outcomes",
+                "components": [
+                    {
+                        "id": "model_metrics_strip",
+                        "type": "metric_strip",
+                        "props": {
+                            "metrics": [
+                                {"label": "Synthesis Status", "value": "MODEL_GENERATED", "badge_color": "emerald"},
+                                {"label": "Target Shape", "value": expected_shape.upper(), "badge_color": "blue"},
+                                {"label": "Interactive Controls", "value": "ENABLED", "badge_color": "purple"}
+                            ]
+                        }
+                    },
+                    {
+                        "id": "model_data_grid",
+                        "type": "data_grid",
+                        "props": {
+                            "title": "Autonomous Model Intelligence Grid",
+                            "columns": [
+                                {"key": "name", "header": "Synthesized Attribute", "type": "text"},
+                                {"key": "value", "header": "Model Assessment", "type": "text"},
+                                {"key": "confidence", "header": "Inference Confidence", "type": "score"},
+                                {"key": "status", "header": "Status", "type": "badge"}
+                            ],
+                            "rows": [
+                                {"name": "Inference Engine", "value": model, "confidence": 0.98, "status": "VERIFIED"},
+                                {"name": "Intent Context", "value": intent[:40], "confidence": 0.95, "status": "ALIGNED"},
+                            ],
+                            "placeholder_count": 0
+                        }
+                    }
+                ]
+            }
+            return mock_plan, {"prompt_tokens": 120, "completion_tokens": 180, "total_tokens": 300}
 
-        req = urllib.request.Request(
-            endpoint,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
-                "User-Agent": "Intent-Operating-Layer/0.9",
-            },
-            method="POST",
-        )
-
-        # Run in thread executor to not block async loop
         import asyncio
         loop = asyncio.get_event_loop()
 
-        def _do_request():
-            with urllib.request.urlopen(req, timeout=self.default_timeout_seconds) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-                content = data["choices"][0]["message"]["content"]
-                return json.loads(content)
+        if provider_type == "anthropic":
+            endpoint = f"{base_url}/messages"
+            payload = {
+                "model": model,
+                "max_tokens": 1500,
+                "system": system_prompt,
+                "messages": [{"role": "user", "content": user_content}],
+            }
+            req = urllib.request.Request(
+                endpoint,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": api_key,
+                    "anthropic-version": "2023-06-01",
+                    "User-Agent": "Intent-Operating-Layer/0.9",
+                },
+                method="POST",
+            )
 
-        return await loop.run_in_executor(None, _do_request)
+            def _do_anthropic():
+                with urllib.request.urlopen(req, timeout=self.default_timeout_seconds) as resp:
+                    res_data = json.loads(resp.read().decode("utf-8"))
+                    text = res_data["content"][0]["text"].strip()
+                    if text.startswith("```"):
+                        text = text.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+                    usage = res_data.get("usage", {})
+                    return json.loads(text), {
+                        "prompt_tokens": usage.get("input_tokens", 0),
+                        "completion_tokens": usage.get("output_tokens", 0),
+                        "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
+                    }
+
+            return await loop.run_in_executor(None, _do_anthropic)
+
+        else:
+            # OpenAI / OpenAI-compatible endpoint
+            endpoint = f"{base_url}/chat/completions"
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.2,
+                "max_tokens": 1500,
+            }
+
+            req = urllib.request.Request(
+                endpoint,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}",
+                    "User-Agent": "Intent-Operating-Layer/0.9",
+                },
+                method="POST",
+            )
+
+            def _do_openai():
+                with urllib.request.urlopen(req, timeout=self.default_timeout_seconds) as resp:
+                    res_data = json.loads(resp.read().decode("utf-8"))
+                    content = res_data["choices"][0]["message"]["content"].strip()
+                    if content.startswith("```"):
+                        content = content.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+                    usage = res_data.get("usage", {})
+                    return json.loads(content), {
+                        "prompt_tokens": usage.get("prompt_tokens", 0),
+                        "completion_tokens": usage.get("completion_tokens", 0),
+                        "total_tokens": usage.get("total_tokens", 0),
+                    }
+
+            return await loop.run_in_executor(None, _do_openai)
 
 
 model_provider_gateway = ModelProviderGateway()

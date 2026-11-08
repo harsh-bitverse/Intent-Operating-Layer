@@ -77,12 +77,39 @@ class AdaptiveCapabilityPlanner(BaseAgentAdapter):
                 resolved_urls.append("https://home.iitd.ac.in/")
             if "hackernews" in intent_lower or "hacker news" in intent_lower or "ycombinator" in intent_lower:
                 resolved_urls.append("https://news.ycombinator.com/")
+            if "flight" in intent_lower or "airline" in intent_lower or "air india" in intent_lower or "ai101" in intent_lower:
+                resolved_urls.append("https://en.wikipedia.org/wiki/Air_India_destinations")
+            if "movie" in intent_lower or "film" in intent_lower or "cinema" in intent_lower:
+                resolved_urls.append("https://en.wikipedia.org/wiki/List_of_science_fiction_films_of_the_2020s")
             found_urls = resolved_urls
 
         is_browse_intent = bool(found_urls) or any(w in intent_lower for w in [
             "browse", "visit website", "open page", "extract from url", "inspect site",
-            "web page", "documentation", "official portal", "web destination"
+            "web page", "documentation", "official portal", "web destination",
+            "flight", "airline", "movie", "film", "schedule", "route"
         ])
+
+        is_interactive_form = any(w in intent_lower for w in ["form", "fill", "register", "apply", "draft", "input", "passport", "interaction loop", "interactive browser"])
+        if "browser.interaction_loop" in cap_ids and (is_interactive_form or "loop" in intent_lower):
+            start_url = found_urls[0] if found_urls else "https://httpbin.org/forms/post"
+            return ExecutionPlan(
+                plan_id=f"plan_{uuid.uuid4().hex[:8]}",
+                intent=intent,
+                rationale="Autonomous browser interaction loop: observe DOM, discover inputs, populate draft fields, verify state, and enforce approval gate.",
+                steps=[
+                    PlanStep(
+                        step_id="step_browser_interaction_loop",
+                        capability_id="browser.interaction_loop",
+                        title=f"Autonomous Browser Interaction Loop on {start_url}",
+                        description="Cycle through observe -> select action -> validate -> execute -> verify -> stop.",
+                        parameters={
+                            "goal": intent,
+                            "start_url": start_url,
+                            "max_steps": 6
+                        }
+                    )
+                ]
+            )
 
         if "browser.navigate" in cap_ids and (found_urls or is_browse_intent):
             target_urls = found_urls[:3] if found_urls else ["https://example.com"]

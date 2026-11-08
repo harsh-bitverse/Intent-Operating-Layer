@@ -244,3 +244,31 @@ def test_bind_outcome_to_plan_monotonic():
     assert grid is not None
     assert len(grid.props["rows"]) == 2
     assert grid.props["rows"][0]["engine"] == "PostgreSQL"
+
+
+def test_model_directed_experience_generation_and_blocked_reporting():
+    """Verify Phase 1: MODEL_GENERATED plan synthesis, provenance tokens, and MODEL_GENERATION_BLOCKED fallback."""
+    # 1. Blocked fallback when no provider credentials exist
+    plan_blocked = experience_planner.plan_experience("task_blocked_test", "Compare Redis vs Memcached")
+    assert plan_blocked.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
+    assert plan_blocked.model_metadata["status"] == "MODEL_GENERATION_BLOCKED"
+    assert "No active external LLM credentials configured" in plan_blocked.model_metadata["origin_reason"]
+
+    # 2. Verified MODEL_GENERATED synthesis when provider is configured
+    plan_model = experience_planner.plan_experience(
+        task_id="task_model_test",
+        intent="Synthesize custom autonomous intelligence dashboard",
+        expected_shape="comparison",
+        context_metadata={"model_api_key": "test_key", "model_provider": "mock", "model_name": "mock-gpt-4o"}
+    )
+    assert plan_model.plan_origin == "MODEL_GENERATED"
+    assert plan_model.model_metadata["status"] == "SUCCESS"
+    assert plan_model.model_metadata["provider"] == "mock"
+    assert "usage" in plan_model.model_metadata
+    assert plan_model.model_metadata["usage"]["total_tokens"] > 0
+    assert len(plan_model.components) >= 2
+
+    # 3. Component catalog validation
+    comp_types = [c.type for c in plan_model.components]
+    assert "metric_strip" in comp_types
+    assert "data_grid" in comp_types

@@ -195,3 +195,43 @@ def test_browser_policy_prompt_injection_sanitization():
     # 3. Legitimate content preserved
     assert "Welcome to the portal" in sanitized
     assert "Contact: admin@example.com" in sanitized
+
+
+@pytest.mark.asyncio
+async def test_autonomous_browser_interaction_loop_cycle():
+    """Verify Phase 2: Autonomous browser action loop cycles through observe -> select -> execute -> verify -> stop."""
+    from backend.iol.browser.loop import browser_interaction_loop, BrowserLoopResult
+    from backend.iol.capabilities.browser import BrowserInteractionLoopCapability, BrowserInteractionLoopInput
+
+    # 1. Test execution on public site
+    result: BrowserLoopResult = await browser_interaction_loop.run_loop(
+        tenant_id="test_tenant_loop",
+        task_id="task_test_loop_1",
+        goal="Explore page headings and extract sections",
+        start_url="https://example.com",
+        max_steps=4,
+    )
+
+    assert result.status in ("COMPLETED", "STOPPED")
+    assert result.total_steps >= 2
+    assert len(result.trace) >= 2
+
+    # Check trace steps sequence
+    actions_taken = [t.action_type for t in result.trace]
+    assert "goto" in actions_taken
+    assert "extract" in actions_taken
+    assert result.final_title == "Example Domain"
+    assert len(result.extracted_records) > 0
+
+    # 2. Test capability registry integration
+    loop_cap = BrowserInteractionLoopCapability()
+    ctx = ExecutionContext(task_id="task_cap_loop_2", step_id="step_loop_1", metadata={"tenant_id": "test_tenant"})
+    cap_input = BrowserInteractionLoopInput(
+        goal="Discover links and sections",
+        start_url="https://example.com",
+        max_steps=3
+    )
+    cap_res = await loop_cap.execute(cap_input, ctx)
+    assert cap_res.success
+    assert cap_res.data["status"] == "COMPLETED"
+    assert len(cap_res.data["trace"]) >= 2

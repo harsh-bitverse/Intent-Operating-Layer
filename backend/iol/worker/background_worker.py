@@ -827,6 +827,134 @@ class BackgroundWorker:
                     OutcomeFieldSchema(key="type", header="Type", type="badge"),
                     OutcomeFieldSchema(key="source", header="Source URL", type="link"),
                 ]
+
+                # Everyday Task Handoff Safety Guardrail
+                is_flight_or_travel = any(w in intent_text for w in ["flight", "airline", "ticket", "fare", "booking"])
+                if is_flight_or_travel:
+                    outcome_env.summary = (
+                        f"Extracted route & schedule specifications from {ext_url}. "
+                        "Live fares and seat bookings require official airline portal authentication; no speculative prices or fake bookings fabricated."
+                    )
+                    if exp_plan and not exp_plan.get_component("flight_handoff_panel"):
+                        from backend.iol.experience.models import ExperienceComponent
+                        exp_plan.components.append(
+                            ExperienceComponent(
+                                id="flight_handoff_panel",
+                                type="action_panel",
+                                props={
+                                    "action_id": "act_flight_handoff",
+                                    "action_type": "external.portal_handoff",
+                                    "effect": "READ",
+                                    "target_url": ext_url or "https://www.airindia.com/",
+                                    "explanation": "Official airline portal handoff for live seat availability, authenticated fare inquiry, and ticket issuance.",
+                                    "parameters": {"mode": "OFFICIAL_PORTAL_HANDOFF", "booking_boundary": "AUTHENTICATED_AIRLINE_SESSION"}
+                                }
+                            )
+                        )
+
+                outcome_env.revision += 1
+
+        elif cap_id == "browser.interaction_loop":
+            loop_status = data.get("status", "COMPLETED")
+            total_loop_steps = data.get("total_steps", 0)
+            extracted = data.get("extracted_records", [])
+            form_fields = data.get("form_fields", [])
+            final_url = data.get("final_url", "")
+            final_title = data.get("final_title", "")
+            pending = data.get("pending_action")
+
+            self._update_ui_metric(ui_root, "Execution Mode", "LIVE (BROWSER LOOP)")
+            self._update_ui_metric(ui_root, "Verified Records", len(extracted) + len(form_fields))
+            ui_root.summary = f"Browser loop {loop_status.lower()}: {total_loop_steps} steps executed on '{final_title}'."
+
+            # Update candidate table with executed actions or discovered form fields
+            rows = []
+            for f in form_fields:
+                rows.append({
+                    "property": f.get("selector", "Input Field"),
+                    "value": f.get("value", ""),
+                    "status": "POPULATED & VERIFIED"
+                })
+            for r in extracted:
+                rows.append({
+                    "property": r.get("name", "Extracted Item"),
+                    "value": r.get("source_url", final_url),
+                    "status": "VERIFIED"
+                })
+
+            for comp in ui_root.components:
+                if isinstance(comp, TableComponent) and comp.id == "candidate_table":
+                    comp.title = f"Autonomous Browser Loop Results: {final_title}"
+                    comp.columns = [
+                        TableColumn(key="property", header="Target / Selector / Entity", type="text"),
+                        TableColumn(key="value", header="Value / Destination", type="text"),
+                        TableColumn(key="status", header="Verification Status", type="badge"),
+                    ]
+                    comp.rows = rows
+
+            # Update experience plan
+            if exp_plan:
+                if form_fields:
+                    form_comp = exp_plan.get_component("form_draft_main")
+                    if form_comp:
+                        form_comp.props["status"] = "LOCAL_DRAFT_POPULATED"
+                        form_comp.props["fields"] = [
+                            {"name": f.get("selector", ""), "label": f.get("selector", "").replace("#", "").title(), "value": f.get("value", ""), "type": "text"}
+                            for f in form_fields
+                        ]
+                grid_comp = exp_plan.get_component("research_grid_main") or exp_plan.get_component("comparison_matrix_main")
+                if grid_comp and rows:
+                    grid_comp.props["columns"] = [
+                        {"key": "property", "header": "Target / Selector / Entity", "type": "text"},
+                        {"key": "value", "header": "Value / Destination", "type": "text"},
+                        {"key": "status", "header": "Status", "type": "badge"},
+                    ]
+                    grid_comp.props["rows"] = rows
+                    grid_comp.props["placeholder_count"] = 0
+
+                # If pending approval action exists, bind ActionPanel into ExperiencePlan
+                if pending:
+                    from backend.iol.experience.models import ExperienceComponent
+                    action_panel = exp_plan.get_component("action_panel_main")
+                    if not action_panel:
+                        exp_plan.components.append(
+                            ExperienceComponent(
+                                id="action_panel_main",
+                                type="action_panel",
+                                props={
+                                    "action_id": f"act_{uuid.uuid4().hex[:8]}",
+                                    "action_type": pending.get("action_type", "browser.click"),
+                                    "effect": pending.get("effect", "EXTERNAL_WRITE"),
+                                    "target_url": pending.get("target_url", final_url),
+                                    "explanation": pending.get("explanation", "Action modifies external state and requires operator authorization."),
+                                    "parameters": pending.get("parameters", {}),
+                                }
+                            )
+                        )
+
+            # Update outcome envelope
+            if outcome_env:
+                is_form = bool(form_fields)
+                outcome_env.shape = OutcomeShape.DOCUMENT if is_form else (
+                    OutcomeShape.COMPARISON if "compare" in ui_root.title.lower() else OutcomeShape.COLLECTION
+                )
+                outcome_env.source_mode = SourceMode.LIVE_BROWSER
+                outcome_env.summary = f"Autonomous browser loop executed {total_loop_steps} steps on {final_title}."
+                if pending:
+                    outcome_env.summary += f" [PAUSED FOR APPROVAL: {pending.get('action_type')}]"
+                outcome_env.field_schema = [
+                    OutcomeFieldSchema(key="property", header="Property", type="text"),
+                    OutcomeFieldSchema(key="value", header="Value", type="text"),
+                    OutcomeFieldSchema(key="status", header="Status", type="badge"),
+                ]
+                outcome_env.items = [
+                    OutcomeItem(
+                        id=f"loop_item_{i}",
+                        fields=r,
+                        evidence=[OutcomeEvidenceRecord(source_url=final_url, source_mode=SourceMode.LIVE_BROWSER, excerpt=str(r["value"]))]
+                    )
+                    for i, r in enumerate(rows)
+                ]
                 outcome_env.revision += 1
 
         elif cap_id == "research.entity_discovery":

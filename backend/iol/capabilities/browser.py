@@ -270,8 +270,65 @@ class BrowserActionCapability(BaseCapability):
         )
 
 
+class BrowserInteractionLoopInput(BaseModel):
+    goal: str = Field(description="Goal or instructions for the browser loop")
+    start_url: str = Field(description="Initial URL to navigate to")
+    max_steps: int = Field(default=6, description="Maximum step budget")
+
+
+class BrowserInteractionLoopOutput(BaseModel):
+    status: str
+    total_steps: int
+    trace: List[Dict[str, Any]] = Field(default_factory=list)
+    extracted_records: List[Dict[str, Any]] = Field(default_factory=list)
+    form_fields: List[Dict[str, Any]] = Field(default_factory=list)
+    final_url: str = ""
+    final_title: str = ""
+    screenshot_path: Optional[str] = None
+    pending_action: Optional[Dict[str, Any]] = None
+
+
+class BrowserInteractionLoopCapability(BaseCapability):
+    capability_id = "browser.interaction_loop"
+    name = "Autonomous Browser Interaction Loop"
+    description = "Executes an autonomous bounded browser action loop (observe -> select tool -> validate -> execute -> verify -> stop)."
+    version = "1.0.0"
+    input_model = BrowserInteractionLoopInput
+    output_model = BrowserInteractionLoopOutput
+    required_permissions = ["network.browser.navigate", "network.browser.action"]
+    verification_metadata = {
+        "sandbox": "playwright_chromium",
+        "autonomous_loop": True,
+        "approval_gated": True,
+    }
+
+    async def execute(self, params: BaseModel, context: ExecutionContext) -> CapabilityResult:
+        from backend.iol.browser.loop import browser_interaction_loop
+
+        loop_params: BrowserInteractionLoopInput = params  # type: ignore
+        tenant_id = context.metadata.get("tenant_id", "default_tenant")
+        task_id = context.task_id
+
+        res = await browser_interaction_loop.run_loop(
+            tenant_id=tenant_id,
+            task_id=task_id,
+            goal=loop_params.goal,
+            start_url=loop_params.start_url,
+            max_steps=loop_params.max_steps,
+            context_metadata=context.metadata,
+        )
+
+        return CapabilityResult(
+            success=res.status in ("COMPLETED", "PAUSED_FOR_APPROVAL"),
+            data=res.model_dump(),
+            verification_score=1.0 if res.status in ("COMPLETED", "PAUSED_FOR_APPROVAL") else 0.5,
+            verification_details={"steps_executed": res.total_steps, "status": res.status},
+        )
+
+
 def register_browser_capabilities(registry) -> None:
     """Registers all browser capabilities into the centralized IOL capability registry."""
     registry.register(BrowserNavigateCapability())
     registry.register(BrowserExtractCapability())
     registry.register(BrowserActionCapability())
+    registry.register(BrowserInteractionLoopCapability())
