@@ -213,6 +213,10 @@ class BrowserActionExecutor:
         except Exception:
             text_snippet = ""
 
+        # Defang prompt injection and neutralize malicious tokens in untrusted content
+        title = self.policy.sanitize_untrusted_text(title)
+        text_snippet = self.policy.sanitize_untrusted_text(text_snippet)
+
         # Extract accessible interactive elements
         elements = await self._discover_accessible_elements(page)
 

@@ -98,3 +98,4 @@ class ExperiencePlanValidator:
 
 
 validator = ExperiencePlanValidator()
+experience_plan_validator = validator

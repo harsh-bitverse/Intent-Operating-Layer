@@ -61,30 +61,56 @@ class AdaptiveCapabilityPlanner(BaseAgentAdapter):
             )
 
         # Browser Navigation & Web Extraction Intent Planning
-        url_match = re.search(r'https?://[^\s<>"]+', intent)
-        is_browse_intent = bool(url_match) or any(w in intent_lower for w in ["browse", "visit website", "open page", "extract from url", "inspect site", "web page"])
-        if "browser.navigate" in cap_ids and is_browse_intent:
-            target_url = url_match.group(0) if url_match else "https://example.com"
-            steps = [
-                PlanStep(
-                    step_id="step_browser_navigate",
-                    capability_id="browser.navigate",
-                    title=f"Navigate to {target_url}",
-                    description=f"Open sandboxed browser and load page at {target_url}.",
-                    parameters={"url": target_url, "timeout_ms": 15000}
-                ),
-                PlanStep(
-                    step_id="step_browser_extract",
-                    capability_id="browser.extract",
-                    title="Extract Page Structure and Telemetry",
-                    description="Extract semantic headings, links, metadata, and accessible elements.",
-                    parameters={"fields": ["title", "description", "headings", "external_links"]}
+        found_urls = re.findall(r'https?://[^\s<>"]+', intent)
+        found_urls = [u.rstrip('.,;:)"\'') for u in found_urls]
+
+        # Canonical public documentation / portal resolution when explicitly mentioned
+        if not found_urls:
+            resolved_urls = []
+            if "fastapi" in intent_lower:
+                resolved_urls.append("https://fastapi.tiangolo.com/")
+            if "flask" in intent_lower:
+                resolved_urls.append("https://flask.palletsprojects.com/")
+            if "python" in intent_lower and ("doc" in intent_lower or "tutorial" in intent_lower):
+                resolved_urls.append("https://docs.python.org/3/")
+            if "iit delhi" in intent_lower or "iitd" in intent_lower:
+                resolved_urls.append("https://home.iitd.ac.in/")
+            if "hackernews" in intent_lower or "hacker news" in intent_lower or "ycombinator" in intent_lower:
+                resolved_urls.append("https://news.ycombinator.com/")
+            found_urls = resolved_urls
+
+        is_browse_intent = bool(found_urls) or any(w in intent_lower for w in [
+            "browse", "visit website", "open page", "extract from url", "inspect site",
+            "web page", "documentation", "official portal", "web destination"
+        ])
+
+        if "browser.navigate" in cap_ids and (found_urls or is_browse_intent):
+            target_urls = found_urls[:3] if found_urls else ["https://example.com"]
+            steps = []
+            for idx, target_url in enumerate(target_urls, start=1):
+                steps.append(
+                    PlanStep(
+                        step_id=f"step_browser_navigate_{idx}",
+                        capability_id="browser.navigate",
+                        title=f"Navigate to {target_url}",
+                        description=f"Open sandboxed browser and load page at {target_url}.",
+                        parameters={"url": target_url, "timeout_ms": 15000}
+                    )
                 )
-            ]
+                steps.append(
+                    PlanStep(
+                        step_id=f"step_browser_extract_{idx}",
+                        capability_id="browser.extract",
+                        title=f"Extract Structured Findings from {target_url}",
+                        description="Extract semantic headings, links, metadata, and accessible elements.",
+                        parameters={"fields": ["title", "description", "headings", "external_links"]}
+                    )
+                )
+
             return ExecutionPlan(
                 plan_id=f"plan_{uuid.uuid4().hex[:8]}",
                 intent=intent,
-                rationale=f"Sandboxed browser navigation to {target_url} and structured evidence extraction.",
+                rationale=f"Sandboxed browser navigation across {len(target_urls)} destination(s) with structured evidence extraction.",
                 steps=steps
             )
 

@@ -27,6 +27,7 @@ export const TaskView: React.FC<TaskViewProps> = ({
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [expandedEventId, setExpandedEventId] = useState<number | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [lastActionDecision, setLastActionDecision] = useState<'APPROVED' | 'REJECTED' | null>(null);
 
   const lastEventIdRef = useRef<number | null>(null);
 
@@ -515,21 +516,38 @@ export const TaskView: React.FC<TaskViewProps> = ({
         )}
 
         {/* Scoped Action Approval Banner */}
-        {(task.status === 'PAUSED_FOR_APPROVAL' || task.pending_action) && (
+        {((task.status === 'PAUSED_FOR_APPROVAL' || task.pending_action) || lastActionDecision) && (
           <div className="mt-4" data-testid="task-pending-approval-wrapper">
-            <ActionPanel
-              taskId={task.task_id}
-              actionRequest={task.pending_action}
-              apiKey={apiKey}
-              apiBaseUrl={apiBaseUrl}
-              onActionHandled={(decision) => {
-                if (decision === 'APPROVED') {
-                  setTask((prev) => (prev ? { ...prev, status: 'RUNNING' as TaskStatus, pending_action: undefined } : prev));
-                } else {
-                  setTask((prev) => (prev ? { ...prev, pending_action: undefined } : prev));
-                }
-              }}
-            />
+            {lastActionDecision ? (
+              <div
+                data-testid="action-decision-status"
+                className={`p-3 rounded-lg text-xs font-semibold text-center border ${
+                  lastActionDecision === 'APPROVED'
+                    ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800'
+                    : 'bg-red-950/60 text-red-300 border-red-800'
+                }`}
+              >
+                {lastActionDecision === 'APPROVED'
+                  ? '✓ Action approved. Resuming execution...'
+                  : '✕ Action rejected. Task will handle rejection gracefully.'}
+              </div>
+            ) : (
+              <ActionPanel
+                taskId={task.task_id}
+                actionRequest={task.pending_action}
+                apiKey={apiKey}
+                apiBaseUrl={apiBaseUrl}
+                onActionHandled={(decision) => {
+                  setLastActionDecision(decision);
+                  if (decision === 'APPROVED') {
+                    setTask((prev) => (prev ? { ...prev, status: 'RUNNING' as TaskStatus, pending_action: undefined } : prev));
+                  } else {
+                    setTask((prev) => (prev ? { ...prev, pending_action: undefined } : prev));
+                  }
+                  setTimeout(() => setLastActionDecision(null), 5000);
+                }}
+              />
+            )}
           </div>
         )}
       </div>

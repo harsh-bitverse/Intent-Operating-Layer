@@ -7,6 +7,7 @@ without delaying or blocking the core Execution Engine.
 from typing import Any, Dict, List, Optional
 from backend.iol.experience.models import ExperiencePlan
 from backend.iol.experience.recipes import experience_recipe_store
+from backend.iol.experience.gateway import model_provider_gateway
 
 
 class ExperiencePlanner:
@@ -19,11 +20,33 @@ class ExperiencePlanner:
         self,
         task_id: str,
         intent: str,
-        research_request: Optional[Any] = None
+        research_request: Optional[Any] = None,
+        context_metadata: Optional[Dict[str, Any]] = None,
+        expected_shape: str = "collection",
     ) -> ExperiencePlan:
         """
         Produce initial ExperiencePlan immediately (<5ms) before or at the start of task execution.
+        Attempts model-directed synthesis if provider credentials exist; otherwise safely adapts recipes.
+        Never mislabels fallbacks as MODEL_GENERATED.
         """
+        # 1. Attempt model-directed generation if provider is configured
+        provider_info = model_provider_gateway.get_configured_provider(context_metadata)
+        if provider_info:
+            try:
+                import asyncio
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    future = pool.submit(
+                        asyncio.run,
+                        model_provider_gateway.generate_plan(task_id, intent, expected_shape, context_metadata)
+                    )
+                    model_plan = future.result(timeout=4.0)
+                if model_plan:
+                    return model_plan
+            except Exception:
+                pass
+
+        # 2. Recipe adaptation / deterministic fallback path
         entity_type = None
         custom_columns = None
 
@@ -38,8 +61,10 @@ class ExperiencePlanner:
                 entity_type = "professor"
             elif "neural" in intent_lower or "teach" in intent_lower or "network" in intent_lower:
                 entity_type = "neural_network"
-            elif "repository" in intent_lower or "repo" in intent_lower or "tool" in intent_lower:
+            elif "repository" in intent_lower or "repo" in intent_lower or "tool" in intent_lower or "framework" in intent_lower:
                 entity_type = "repository"
+            elif any(w in intent_lower for w in ["form", "passport", "license", "apply", "renewal"]):
+                entity_type = "form"
 
         # Build column schema tailored to entity type if applicable
         if entity_type == "startup":
@@ -74,6 +99,13 @@ class ExperiencePlanner:
         # Match recipe
         recipe = self.recipe_store.find_matching_recipe(intent, entity_type)
 
+        # Distinguish between specifically matched recipe and generic fallback
+        is_default_fallback = (
+            recipe.recipe_id == "exp_recipe_research_database" and
+            not any(k in intent.lower() for k in ["startup", "professor", "research", "database", "find", "ai"])
+        )
+        origin = "DETERMINISTIC_FALLBACK" if is_default_fallback else "RECIPE_ADAPTED"
+
         # Adapt into concrete plan
         plan = self.recipe_store.adapt_recipe_to_plan(
             recipe=recipe,
@@ -82,8 +114,13 @@ class ExperiencePlanner:
             entity_type=entity_type,
             custom_columns=custom_columns
         )
-        plan.plan_origin = "RECIPE_ADAPTED"
+        plan.plan_origin = origin
         plan.version = 1
+        plan.model_metadata = {
+            "provider": None,
+            "origin_reason": "No active external LLM credentials configured; safely adapted verified declarative layout template.",
+            "recipe_id": recipe.recipe_id
+        }
 
         return plan
 

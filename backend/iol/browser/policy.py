@@ -4,6 +4,7 @@ Enforces SSRF protections, step budgets, action classification, and approval req
 """
 
 import logging
+import re
 import urllib.parse
 from typing import Optional, Tuple
 from backend.iol.browser.models import BrowserAction, BrowserActionEffect, BrowserActionType
@@ -19,9 +20,61 @@ PAYMENT_KEYWORDS = {"pay", "purchase", "checkout", "buy", "order", "subscribe", 
 DESTRUCTIVE_KEYWORDS = {"delete", "destroy", "terminate", "remove", "drop", "wipe"}
 EXTERNAL_WRITE_KEYWORDS = {"submit", "send email", "send message", "confirm booking", "publish", "post comment"}
 
+INJECTION_TOKENS = (
+    "<|im_start|>",
+    "<|im_end|>",
+    "<|system|>",
+    "<|user|>",
+    "<|assistant|>",
+    "<|prompt|>",
+    "[INST]",
+    "[/INST]",
+    "<<SYS>>",
+    "<</SYS>>",
+    "<s>",
+    "</s>",
+)
+
+ADVERSARIAL_PHRASES = (
+    "ignore previous instructions",
+    "ignore all previous instructions",
+    "ignore prior instructions",
+    "disregard previous instructions",
+    "disregard all prior instructions",
+    "forget your previous instructions",
+    "forget your instructions",
+    "system override",
+    "you are now an unfiltered",
+    "developer mode enabled",
+    "bypass safety filters",
+)
+
 
 class BrowserPolicy:
-    """Enforces safety, SSRF constraints, and action authorizations for browser operations."""
+    """Enforces safety, SSRF constraints, prompt-injection defenses, and action authorizations."""
+
+    def sanitize_untrusted_text(self, text: Optional[str]) -> str:
+        """
+        Sanitizes untrusted DOM text or titles before feeding downstream to models or telemetry.
+        Defangs model control tokens, system override instructions, and raw control characters.
+        """
+        if not text:
+            return ""
+
+        # 1. Strip null bytes and control chars (preserve standard whitespace)
+        cleaned = "".join(ch for ch in text if ch in ("\n", "\r", "\t") or (ord(ch) >= 32 and ord(ch) != 127))
+
+        # 2. Defang known delimiter/control tokens
+        for token in INJECTION_TOKENS:
+            if token in cleaned:
+                cleaned = cleaned.replace(token, f"[DEFANGED_TOKEN:{token.strip('<>[]')}]")
+
+        # 3. Neutralize adversarial prompt-override phrases (case-insensitive)
+        for phrase in ADVERSARIAL_PHRASES:
+            pattern = re.compile(re.escape(phrase), re.IGNORECASE)
+            cleaned = pattern.sub("[FILTERED_PROMPT_INJECTION]", cleaned)
+
+        return cleaned
 
     def __init__(
         self,

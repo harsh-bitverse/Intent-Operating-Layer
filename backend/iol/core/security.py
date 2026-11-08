@@ -6,6 +6,7 @@ cloud metadata access (169.254.169.254), and memory exhaustion attacks.
 
 import ipaddress
 import logging
+import os
 import socket
 import urllib.parse
 from typing import Any, Dict, Optional, Tuple
@@ -67,6 +68,10 @@ def validate_url_safety(url: str) -> Tuple[bool, Optional[str]]:
     ):
         return False, f"Host '{hostname}' is explicitly blocked (internal/metadata domain)."
 
+    # Support split-horizon DNS for official institutional domains (e.g. on campus networks)
+    allowed_hosts = set(h.strip().lower() for h in os.environ.get("IOL_ALLOWED_HOSTS", "").split(",") if h.strip())
+    is_trusted_institutional = hostname_lower.endswith(".iitd.ac.in") or hostname_lower in allowed_hosts
+
     # Resolve IP address to detect DNS rebinding, loopbacks, and private aliases
     try:
         addr_info = socket.getaddrinfo(hostname, parsed.port or (443 if parsed.scheme == "https" else 80))
@@ -80,7 +85,7 @@ def validate_url_safety(url: str) -> Tuple[bool, Optional[str]]:
 
             if ip_obj.is_loopback:
                 return False, f"Resolution to loopback address '{ip_str}' is prohibited."
-            if ip_obj.is_private:
+            if ip_obj.is_private and not is_trusted_institutional:
                 return False, f"Resolution to private network IP '{ip_str}' is prohibited."
             if ip_obj.is_link_local:
                 return False, f"Resolution to link-local IP '{ip_str}' is prohibited."
