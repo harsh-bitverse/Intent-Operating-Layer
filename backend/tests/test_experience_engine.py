@@ -254,16 +254,18 @@ def test_model_directed_experience_generation_and_blocked_reporting():
     assert plan_blocked.model_metadata["status"] == "MODEL_GENERATION_BLOCKED"
     assert "No active external LLM credentials configured" in plan_blocked.model_metadata["origin_reason"]
 
-    # 2. Verified MODEL_GENERATED synthesis when provider is configured
+    # 2. Verified TEST_SYNTHESIZED synthesis when test provider is configured
     plan_model = experience_planner.plan_experience(
         task_id="task_model_test",
         intent="Synthesize custom autonomous intelligence dashboard",
         expected_shape="comparison",
         context_metadata={"model_api_key": "test_key", "model_provider": "mock", "model_name": "mock-gpt-4o"}
     )
-    assert plan_model.plan_origin == "MODEL_GENERATED"
+    assert plan_model.plan_origin == "TEST_SYNTHESIZED"
     assert plan_model.model_metadata["status"] == "SUCCESS"
     assert plan_model.model_metadata["provider"] == "mock"
+    assert plan_model.model_metadata["usage_type"] == "SIMULATED"
+    assert plan_model.model_metadata["is_estimated"] is True
     assert "usage" in plan_model.model_metadata
     assert plan_model.model_metadata["usage"]["total_tokens"] > 0
     assert len(plan_model.components) >= 2

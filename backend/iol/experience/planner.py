@@ -147,12 +147,20 @@ class ExperiencePlanner:
         )
         plan.plan_origin = origin
         plan.version = 1
-        plan.model_metadata = {
-            "provider": None,
-            "status": "MODEL_GENERATION_BLOCKED",
-            "origin_reason": "No active external LLM credentials configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, or OLLAMA_HOST missing); safely adapted verified declarative layout template.",
-            "recipe_id": recipe.recipe_id
-        }
+        if provider_info:
+            plan.model_metadata = {
+                "provider": provider_info.get("provider"),
+                "status": "MODEL_GENERATION_FAILED",
+                "origin_reason": "Configured LLM inference failed or timed out; safely fell back to verified declarative layout template.",
+                "recipe_id": recipe.recipe_id
+            }
+        else:
+            plan.model_metadata = {
+                "provider": None,
+                "status": "MODEL_GENERATION_BLOCKED",
+                "origin_reason": "No active external LLM credentials configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or OLLAMA_HOST missing); safely adapted verified declarative layout template.",
+                "recipe_id": recipe.recipe_id
+            }
 
         return plan
 

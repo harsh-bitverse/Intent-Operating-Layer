@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import json
 import logging
 import os
+import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
 import urllib.request
@@ -145,16 +146,25 @@ class ModelProviderGateway:
             if "plan_id" not in raw_plan_dict:
                 raw_plan_dict["plan_id"] = f"exp_model_{int(time.time())}"
             raw_plan_dict["status"] = "ACTIVE"
-            raw_plan_dict["plan_origin"] = "MODEL_GENERATED"
+            is_mock = provider_info.get("provider") in ("mock", "test_mock")
+            raw_plan_dict["plan_origin"] = "TEST_SYNTHESIZED" if is_mock else "MODEL_GENERATED"
             raw_plan_dict["version"] = 1
 
             latency_ms = round((time.perf_counter() - t0) * 1000, 2)
+            usage_dict = dict(usage_info) if usage_info else {}
+            usage_type = "SIMULATED" if is_mock else "ACTUAL"
+            is_estimated = True if is_mock else False
+            usage_dict["usage_type"] = usage_type
+            usage_dict["is_estimated"] = is_estimated
+
             raw_plan_dict["model_metadata"] = {
                 "provider": provider_info["provider"],
                 "model": provider_info.get("model", "unknown"),
                 "status": "SUCCESS",
                 "latency_ms": latency_ms,
-                "usage": usage_info or {},
+                "usage": usage_dict,
+                "usage_type": usage_type,
+                "is_estimated": is_estimated,
                 "generated_at": datetime.now(timezone.utc).isoformat(),
             }
 
@@ -207,6 +217,13 @@ class ModelProviderGateway:
         import asyncio
         loop = asyncio.get_event_loop()
 
+        # For localhost or local Ollama endpoints, build an opener that bypasses any HTTP proxy
+        is_local = "127.0.0.1" in base_url or "localhost" in base_url
+        def _get_opener():
+            if is_local:
+                return urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            return urllib.request.build_opener()
+
         if provider_type == "anthropic":
             endpoint = f"{base_url}/messages"
             payload = {
@@ -228,7 +245,8 @@ class ModelProviderGateway:
             )
 
             def _do_anthropic():
-                with urllib.request.urlopen(req, timeout=self.default_timeout_seconds) as resp:
+                opener = _get_opener()
+                with opener.open(req, timeout=self.default_timeout_seconds) as resp:
                     res_data = json.loads(resp.read().decode("utf-8"))
                     text = res_data["content"][0]["text"].strip()
                     if text.startswith("```"):
@@ -238,6 +256,8 @@ class ModelProviderGateway:
                         "prompt_tokens": usage.get("input_tokens", 0),
                         "completion_tokens": usage.get("output_tokens", 0),
                         "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
+                        "usage_type": "ACTUAL",
+                        "is_estimated": False,
                     }
 
             return await loop.run_in_executor(None, _do_anthropic)
@@ -265,7 +285,8 @@ class ModelProviderGateway:
             )
 
             def _do_gemini():
-                with urllib.request.urlopen(req, timeout=self.default_timeout_seconds) as resp:
+                opener = _get_opener()
+                with opener.open(req, timeout=self.default_timeout_seconds) as resp:
                     res_data = json.loads(resp.read().decode("utf-8"))
                     text = res_data["candidates"][0]["content"]["parts"][0]["text"].strip()
                     if text.startswith("```"):
@@ -275,6 +296,8 @@ class ModelProviderGateway:
                         "prompt_tokens": usage.get("promptTokenCount", 0),
                         "completion_tokens": usage.get("candidatesTokenCount", 0),
                         "total_tokens": usage.get("totalTokenCount", 0),
+                        "usage_type": "ACTUAL",
+                        "is_estimated": False,
                     }
 
             return await loop.run_in_executor(None, _do_gemini)
@@ -305,7 +328,8 @@ class ModelProviderGateway:
             )
 
             def _do_openai():
-                with urllib.request.urlopen(req, timeout=self.default_timeout_seconds) as resp:
+                opener = _get_opener()
+                with opener.open(req, timeout=self.default_timeout_seconds) as resp:
                     res_data = json.loads(resp.read().decode("utf-8"))
                     content = res_data["choices"][0]["message"]["content"].strip()
                     if content.startswith("```"):
@@ -315,6 +339,8 @@ class ModelProviderGateway:
                         "prompt_tokens": usage.get("prompt_tokens", 0),
                         "completion_tokens": usage.get("completion_tokens", 0),
                         "total_tokens": usage.get("total_tokens", 0),
+                        "usage_type": "ACTUAL",
+                        "is_estimated": False,
                     }
 
             return await loop.run_in_executor(None, _do_openai)
@@ -432,14 +458,138 @@ class ModelProviderGateway:
                     }
                 ]
             }
-            return plan, {"prompt_tokens": 180, "completion_tokens": 360, "total_tokens": 540}
+            return plan, {
+                "prompt_tokens": 180,
+                "completion_tokens": 360,
+                "total_tokens": 540,
+                "usage_type": "SIMULATED",
+                "is_estimated": True,
+            }
 
-        # 2. Comparison / Matrix / Versus / Benchmark
-        elif any(w in intent_lower for w in ["compare", "vs", "versus", "benchmark", "vite", "webpack"]):
+        # 2. Comparison / Matrix / Versus / Benchmark / Tradeoffs
+        elif any(w in intent_lower for w in ["compare", "comparative", "tradeoff", "vs", "versus", "benchmark"]):
+            # Extract compared entities if present
+            e1, e2 = "Option A", "Option B"
+            if " between " in intent_lower and " and " in intent_lower:
+                parts = intent_lower.split(" between ", 1)[1].split(" and ", 1)
+                e1 = parts[0].strip().split()[0].title()
+                e2 = parts[1].strip().split()[0].title()
+            elif " vs " in intent_lower:
+                parts = intent_lower.split(" vs ", 1)
+                e1 = parts[0].strip().split()[-1].title()
+                e2 = parts[1].strip().split()[0].title()
+            elif " versus " in intent_lower:
+                parts = intent_lower.split(" versus ", 1)
+                e1 = parts[0].strip().split()[-1].title()
+                e2 = parts[1].strip().split()[0].title()
+            elif "compare " in intent_lower and " and " in intent_lower:
+                parts = intent_lower.replace("compare ", "", 1).split(" and ", 1)
+                e1 = parts[0].strip().split()[-1].title()
+                e2 = parts[1].strip().split()[0].title()
+            elif "vite" in intent_lower and "webpack" in intent_lower:
+                e1, e2 = "Vite", "Webpack"
+
+            k1 = re.sub(r"[^a-zA-Z0-9_]", "_", e1.lower())
+            k2 = re.sub(r"[^a-zA-Z0-9_]", "_", e2.lower())
+
+            if e1.lower() == "rust" and e2.lower() == "go":
+                rows = [
+                    {
+                        "dimension": "Memory Safety & Runtime Model",
+                        k1: "Compile-time affine type system & borrow checker; zero GC runtime overhead",
+                        k2: "Concurrent mark-and-sweep garbage collector with ~1ms STW pause guarantees",
+                        "advantage": "Rust (Zero Overhead)"
+                    },
+                    {
+                        "dimension": "Concurrency Architecture",
+                        k1: "Async/await cooperative state machines via Tokio runtime; fearless multithreading",
+                        k2: "M:N green-thread goroutines with channels and work-stealing scheduler",
+                        "advantage": "Go (Ergonomic Concurrency)"
+                    },
+                    {
+                        "dimension": "Compilation Target & Binary Footprint",
+                        k1: "Native LLVM machine code; minimal embedded/container runtime (<3MB stripped)",
+                        k2: "Self-contained static executable with bundled GC runtime (~10-15MB)",
+                        "advantage": "Rust"
+                    },
+                    {
+                        "dimension": "Developer Ergonomics & Learning Curve",
+                        k1: "Steep learning curve due to explicit lifetimes and borrow checker semantics",
+                        k2: "Rapid team onboarding with minimalist specification (25 language keywords)",
+                        "advantage": "Go"
+                    },
+                    {
+                        "dimension": "Tail Latency Predictability (P99)",
+                        k1: "Deterministic microsecond-level execution without GC collection pauses",
+                        k2: "P99 sub-5ms under modern runtime, but occasional GC collection pauses",
+                        "advantage": "Rust (Real-Time)"
+                    }
+                ]
+            elif e1.lower() == "vite" and e2.lower() == "webpack":
+                rows = [
+                    {
+                        "dimension": "Dev Server Cold Start",
+                        k1: "Instant (~150ms) using native browser ESM and unbundled modules",
+                        k2: "Slow (2-15s) requiring full bundle compilation before serving",
+                        "advantage": "Vite"
+                    },
+                    {
+                        "dimension": "Hot Module Replacement (HMR)",
+                        k1: "Constant O(1) latency independent of codebase size",
+                        k2: "Linear O(N) degradation as module graph expands",
+                        "advantage": "Vite"
+                    },
+                    {
+                        "dimension": "Build Pipeline Engine",
+                        k1: "Rollup for production output, ESBuild for pre-bundling",
+                        k2: "Custom Webpack compilation pipeline with mature plugin ecosystem",
+                        "advantage": "Webpack (Ecosystem)"
+                    },
+                    {
+                        "dimension": "Legacy Browser Support",
+                        k1: "Requires @vitejs/plugin-legacy for non-ESM targets",
+                        k2: "Native legacy transpilation via Babel / core-js",
+                        "advantage": "Webpack"
+                    },
+                    {
+                        "dimension": "Configuration Complexity",
+                        k1: "Zero-config sensible defaults for TypeScript, JSX, CSS modules",
+                        k2: "Verbose configuration (loaders, plugins, optimization rules)",
+                        "advantage": "Vite"
+                    }
+                ]
+            else:
+                rows = [
+                    {
+                        "dimension": "Core Architecture & Runtime Model",
+                        k1: f"Specialized architectural model optimized for {e1} workloads",
+                        k2: f"Alternative operational model designed for {e2} paradigms",
+                        "advantage": "Domain-Specific"
+                    },
+                    {
+                        "dimension": "Execution Latency & Throughput",
+                        k1: f"High-efficiency pipeline tuned for bounded latency in {e1}",
+                        k2: f"Distributed or decoupled execution engine for {e2}",
+                        "advantage": f"{e1} (Low Latency)"
+                    },
+                    {
+                        "dimension": "Ecosystem Maturity & Tooling",
+                        k1: f"Established tooling and library ecosystem supporting {e1}",
+                        k2: f"Specialized operational utilities tailored for {e2}",
+                        "advantage": "Context-Dependent"
+                    },
+                    {
+                        "dimension": "Resource Consumption & Footprint",
+                        k1: f"Optimized memory and compute allocation under {e1}",
+                        k2: f"Elastic scaling profile suited for {e2} infrastructure",
+                        "advantage": f"{e1}"
+                    }
+                ]
+
             plan = {
                 "mode": "FULL_WORKSPACE",
-                "title": f"Comparative Intelligence: {intent[:60]}",
-                "subtitle": "Synthesized multi-dimensional evaluation with empirical architectural tradeoffs",
+                "title": f"Comparative Intelligence: {e1} vs {e2}",
+                "subtitle": f"Synthesized multi-dimensional evaluation of {intent[:60]}",
                 "components": [
                     {
                         "id": "model_metrics_strip",
@@ -447,8 +597,8 @@ class ModelProviderGateway:
                         "props": {
                             "metrics": [
                                 {"label": "Comparison Mode", "value": "EMPIRICAL_BENCHMARK", "badge_color": "emerald"},
-                                {"label": "Evaluation Dimensions", "value": "5 Criteria", "badge_color": "blue"},
-                                {"label": "Recommended Choice", "value": "Context-Dependent", "badge_color": "purple"}
+                                {"label": "Compared Targets", "value": f"{e1} vs {e2}", "badge_color": "blue"},
+                                {"label": "Evaluation Dimensions", "value": f"{len(rows)} Criteria", "badge_color": "purple"}
                             ]
                         }
                     },
@@ -456,86 +606,87 @@ class ModelProviderGateway:
                         "id": "comparison_matrix_main",
                         "type": "comparison_matrix",
                         "props": {
-                            "title": "Architectural & Performance Tradeoff Matrix",
+                            "title": f"Architectural & Tradeoff Matrix: {e1} vs {e2}",
                             "columns": [
                                 {"key": "dimension", "header": "Evaluation Dimension", "type": "text"},
-                                {"key": "vite", "header": "Vite (ESBuild + Rollup)", "type": "text"},
-                                {"key": "webpack", "header": "Webpack (AST Bundler)", "type": "text"},
+                                {"key": k1, "header": e1, "type": "text"},
+                                {"key": k2, "header": e2, "type": "text"},
                                 {"key": "advantage", "header": "Architectural Advantage", "type": "badge"}
                             ],
-                            "rows": [
-                                {
-                                    "dimension": "Dev Server Cold Start",
-                                    "vite": "Instant (~150ms) using native browser ESM and unbundled modules",
-                                    "webpack": "Slow (2-15s) requiring full bundle compilation before serving",
-                                    "advantage": "Vite"
-                                },
-                                {
-                                    "dimension": "Hot Module Replacement (HMR)",
-                                    "vite": "Constant O(1) latency independent of codebase size",
-                                    "webpack": "Linear O(N) degradation as module graph expands",
-                                    "advantage": "Vite"
-                                },
-                                {
-                                    "dimension": "Build Pipeline Engine",
-                                    "vite": "Rollup for production output, ESBuild for pre-bundling",
-                                    "webpack": "Custom Webpack compilation pipeline with mature plugin ecosystem",
-                                    "advantage": "Webpack (Ecosystem)"
-                                },
-                                {
-                                    "dimension": "Legacy Browser Support",
-                                    "vite": "Requires @vitejs/plugin-legacy for non-ESM targets",
-                                    "webpack": "Native legacy transpilation via Babel / core-js",
-                                    "advantage": "Webpack"
-                                },
-                                {
-                                    "dimension": "Configuration Complexity",
-                                    "vite": "Zero-config sensible defaults for TypeScript, JSX, CSS modules",
-                                    "webpack": "Verbose configuration (loaders, plugins, optimization rules)",
-                                    "advantage": "Vite"
-                                }
-                            ],
+                            "rows": rows,
                             "placeholder_count": 0
                         }
                     }
                 ]
             }
-            return plan, {"prompt_tokens": 160, "completion_tokens": 280, "total_tokens": 440}
+            return plan, {
+                "prompt_tokens": 160,
+                "completion_tokens": 280,
+                "total_tokens": 440,
+                "usage_type": "SIMULATED",
+                "is_estimated": True,
+            }
 
-        # 3. Timeline / Milestones / Workflow
-        elif any(w in intent_lower for w in ["timeline", "roadmap", "milestone", "schedule", "lifecycle"]):
+        # 3. Timeline / Milestones / Workflow / Trajectory
+        elif any(w in intent_lower for w in ["timeline", "roadmap", "milestone", "schedule", "lifecycle", "trajectory", "orbital"]):
+            if any(w in intent_lower for w in ["orbital", "spacecraft", "trajectory", "delta-v", "mission"]):
+                metrics = [
+                    {"label": "Mission Phase", "value": "INTERPLANETARY_CRUISE", "badge_color": "emerald"},
+                    {"label": "Target Delta-V", "value": "1,240 m/s", "badge_color": "blue"},
+                    {"label": "Telemetry Status", "value": "DIRECT_LINK_NOMINAL", "badge_color": "cyan"},
+                    {"label": "Trajectory Dispersion", "value": "<0.02%", "badge_color": "purple"}
+                ]
+                items = [
+                    {"id": "s1", "title": "Stage 1: Launch & Trans-Atmospheric Ascent", "status": "completed", "description": "Atmospheric departure and staging verified on telemetry."},
+                    {"id": "s2", "title": "Stage 2: Trans-Planetary Injection Burn", "status": "completed", "description": "Upper stage restart and escape velocity achieved (11.2 km/s)."},
+                    {"id": "s3", "title": "Stage 3: Deep Space Trajectory Correction (TCM-1/2)", "status": "active", "description": "Attitude thruster fine adjustments to align B-plane arrival coordinates."},
+                    {"id": "s4", "title": "Stage 4: Orbital Insertion Main Engine Burn (JOI/MOI)", "status": "pending", "description": "Retro-propulsion burn to capture into target planetary elliptical orbit."},
+                    {"id": "s5", "title": "Stage 5: Orbit Circularization & Science Telemetry", "status": "pending", "description": "Aero-braking passes and high-gain science instrument downlink activation."}
+                ]
+                title = f"Spacecraft Trajectory & Telemetry: {intent[:50]}"
+                subtitle = "Sequential orbital insertion stages, propulsion events, and verified telemetry checkpoints"
+            else:
+                metrics = [
+                    {"label": "Current Stage", "value": "IN_PROGRESS", "badge_color": "blue"},
+                    {"label": "Completed Phases", "value": "2 of 4", "badge_color": "emerald"},
+                    {"label": "Target Milestone", "value": "Production Release", "badge_color": "purple"}
+                ]
+                items = [
+                    {"id": "m1", "title": "Architecture & Schema Freezing", "status": "completed", "description": "Contracts, models, and type definitions established."},
+                    {"id": "m2", "title": "Engine Implementation", "status": "completed", "description": "Substrate and planner pipelines wired."},
+                    {"id": "m3", "title": "Live Verification & Probes", "status": "active", "description": "Running live browser and calculation probes."},
+                    {"id": "m4", "title": "Demonstration Delivery", "status": "pending", "description": "Final package and submission delivery."}
+                ]
+                title = f"Process Timeline: {intent[:60]}"
+                subtitle = "Sequential workflow stages and verifiable phase transitions"
+
             plan = {
                 "mode": "FULL_WORKSPACE",
-                "title": f"Process Timeline: {intent[:60]}",
-                "subtitle": "Sequential workflow stages and verifiable phase transitions",
+                "title": title,
+                "subtitle": subtitle,
                 "components": [
                     {
                         "id": "model_metrics_strip",
                         "type": "metric_strip",
-                        "props": {
-                            "metrics": [
-                                {"label": "Current Stage", "value": "IN_PROGRESS", "badge_color": "blue"},
-                                {"label": "Completed Phases", "value": "2 of 4", "badge_color": "emerald"},
-                                {"label": "Target Milestone", "value": "Production Release", "badge_color": "purple"}
-                            ]
-                        }
+                        "props": {"metrics": metrics}
                     },
                     {
                         "id": "model_timeline",
                         "type": "timeline_view",
                         "props": {
-                            "title": "Execution & Delivery Timeline",
-                            "items": [
-                                {"id": "m1", "title": "Architecture & Schema Freezing", "status": "completed", "description": "Contracts, models, and type definitions established."},
-                                {"id": "m2", "title": "Engine Implementation", "status": "completed", "description": "Substrate and planner pipelines wired."},
-                                {"id": "m3", "title": "Live Verification & Probes", "status": "active", "description": "Running live browser and calculation probes."},
-                                {"id": "m4", "title": "Demonstration Delivery", "status": "pending", "description": "Final package and submission delivery."}
-                            ]
+                            "title": "Mission & Stage Transition Tracker",
+                            "items": items
                         }
                     }
                 ]
             }
-            return plan, {"prompt_tokens": 130, "completion_tokens": 220, "total_tokens": 350}
+            return plan, {
+                "prompt_tokens": 130,
+                "completion_tokens": 220,
+                "total_tokens": 350,
+                "usage_type": "SIMULATED",
+                "is_estimated": True,
+            }
 
         # 4. Form / Booking / Flight / Portal Handoff
         elif any(w in intent_lower for w in ["form", "flight", "booking", "portal", "airline", "ticket"]):
@@ -583,7 +734,13 @@ class ModelProviderGateway:
                     }
                 ]
             }
-            return plan, {"prompt_tokens": 150, "completion_tokens": 250, "total_tokens": 400}
+            return plan, {
+                "prompt_tokens": 150,
+                "completion_tokens": 250,
+                "total_tokens": 400,
+                "usage_type": "SIMULATED",
+                "is_estimated": True,
+            }
 
         # 5. Document / Report
         elif any(w in intent_lower for w in ["document", "report", "paper", "summary", "article"]):
@@ -619,7 +776,13 @@ class ModelProviderGateway:
                     }
                 ]
             }
-            return plan, {"prompt_tokens": 140, "completion_tokens": 240, "total_tokens": 380}
+            return plan, {
+                "prompt_tokens": 140,
+                "completion_tokens": 240,
+                "total_tokens": 380,
+                "usage_type": "SIMULATED",
+                "is_estimated": True,
+            }
 
         # Default: Data Grid
         else:
@@ -633,7 +796,7 @@ class ModelProviderGateway:
                         "type": "metric_strip",
                         "props": {
                             "metrics": [
-                                {"label": "Synthesis Status", "value": "MODEL_GENERATED", "badge_color": "emerald"},
+                                {"label": "Synthesis Status", "value": "TEST_SYNTHESIZED", "badge_color": "emerald"},
                                 {"label": "Target Shape", "value": expected_shape.upper(), "badge_color": "blue"},
                                 {"label": "Interactive Controls", "value": "ENABLED", "badge_color": "purple"}
                             ]
@@ -659,7 +822,13 @@ class ModelProviderGateway:
                     }
                 ]
             }
-            return plan, {"prompt_tokens": 120, "completion_tokens": 180, "total_tokens": 300}
+            return plan, {
+                "prompt_tokens": 120,
+                "completion_tokens": 180,
+                "total_tokens": 300,
+                "usage_type": "SIMULATED",
+                "is_estimated": True,
+            }
 
 
 model_provider_gateway = ModelProviderGateway()

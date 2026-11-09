@@ -19,11 +19,12 @@ test.describe('IOL v0.6 - Experience Engine Verification Suite', () => {
 
     // Wait for task creation
     const taskItem = page.locator('[data-testid^="task-item-"]').first();
-    await expect(taskItem).toBeVisible({ timeout: 10000 });
+    await expect(taskItem).toBeVisible({ timeout: 15000 });
+    await taskItem.click();
 
     // Verify Adaptive Workspace Tab is active
     const workspaceTab = page.locator('[data-testid="tab-workspace"]');
-    await expect(workspaceTab).toBeVisible({ timeout: 10000 });
+    await expect(workspaceTab).toBeVisible({ timeout: 15000 });
     await workspaceTab.click();
 
     // Verify Full Workspace mode badge

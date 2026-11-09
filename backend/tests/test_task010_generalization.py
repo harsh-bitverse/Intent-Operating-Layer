@@ -49,9 +49,11 @@ async def test_model_directed_generation_and_blocked_reporting():
     )
 
     assert plan_model is not None
-    assert plan_model.plan_origin == "MODEL_GENERATED"
+    assert plan_model.plan_origin == "TEST_SYNTHESIZED"
     assert plan_model.model_metadata.get("status") == "SUCCESS"
     assert plan_model.model_metadata.get("provider") == "mock"
+    assert plan_model.model_metadata.get("usage_type") == "SIMULATED"
+    assert plan_model.model_metadata.get("is_estimated") is True
     usage = plan_model.model_metadata.get("usage") or plan_model.model_metadata.get("tokens", {})
     assert usage.get("total_tokens", 0) > 0
     assert len(plan_model.components) >= 2

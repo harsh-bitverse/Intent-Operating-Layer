@@ -126,7 +126,7 @@ test.describe('IOL Task 008 - Browser Execution, Form Draft & Scoped Action Appr
 
     // 3. Navigate to task in frontend
     await page.goto(`/?task_id=${taskId}`);
-    await expect(page.locator(`text=${taskId}`)).toBeVisible({ timeout: 15000 });
+    await expect(page.locator(`text=${taskId}`).first()).toBeVisible({ timeout: 15000 });
 
     // 4. Verify Action Approval Panel appears
     const approvalPanel = page.locator('[data-testid="action-approval-panel"]');

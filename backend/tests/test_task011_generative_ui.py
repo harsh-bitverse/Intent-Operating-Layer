@@ -40,7 +40,7 @@ from backend.iol.browser.models import (
 
 @pytest.mark.asyncio
 async def test_model_directed_generative_ui_synthesis():
-    """Verify genuine MODEL_GENERATED ExperiencePlan synthesis with catalog validation and token metadata."""
+    """Verify TEST_SYNTHESIZED ExperiencePlan synthesis with catalog validation and simulated token metadata."""
     gw = ModelProviderGateway()
     context_meta = {"model_provider": "test_mock", "model_name": "iol-synthesizer-v1"}
 
@@ -52,7 +52,7 @@ async def test_model_directed_generative_ui_synthesis():
     )
 
     assert plan is not None
-    assert plan.plan_origin == "MODEL_GENERATED"
+    assert plan.plan_origin == "TEST_SYNTHESIZED"
     assert plan.status == "ACTIVE"
     assert len(plan.components) >= 2
 
@@ -65,9 +65,12 @@ async def test_model_directed_generative_ui_synthesis():
     meta = plan.model_metadata
     assert meta["status"] == "SUCCESS"
     assert meta["provider"] == "test_mock"
+    assert meta["usage_type"] == "SIMULATED"
+    assert meta["is_estimated"] is True
     assert meta["latency_ms"] >= 0
     assert "usage" in meta
     assert meta["usage"]["total_tokens"] > 0
+    assert meta["usage"]["usage_type"] == "SIMULATED"
 
     # Strict catalog schema validation
     is_valid, errors = experience_plan_validator.validate_plan(plan)

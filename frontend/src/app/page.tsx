@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { IntentInput } from '../components/IntentInput';
 import { TaskView } from '../components/TaskView';
 import { CapabilityMetadata, Task } from '../types/iol';
@@ -40,6 +40,9 @@ export default function Home() {
   const [selectedApiKey, setSelectedApiKey] = useState('iol_demo_operator_key');
   const [customKey, setCustomKey] = useState('');
   const [showCustomKeyInput, setShowCustomKeyInput] = useState(false);
+
+  const activeTaskIdRef = useRef<string | null>(null);
+  activeTaskIdRef.current = activeTaskId;
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
   const effectiveApiKey = showCustomKeyInput && customKey.trim() ? customKey.trim() : selectedApiKey;
@@ -89,7 +92,7 @@ export default function Home() {
       if (tasksRes.ok) {
         const data: Task[] = await tasksRes.json();
         setTasks(data);
-        if (data.length > 0 && !activeTaskId) {
+        if (data.length > 0 && !activeTaskIdRef.current) {
           const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
           const qTaskId = urlParams?.get('task_id');
           if (qTaskId && data.some((t) => t.task_id === qTaskId)) {

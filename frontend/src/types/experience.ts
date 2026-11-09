@@ -22,7 +22,7 @@ export interface ExperiencePlan {
   components: ExperienceComponent[];
   metadata?: Record<string, any>;
   version?: number;
-  plan_origin?: 'MODEL_GENERATED' | 'RECIPE_ADAPTED' | 'DETERMINISTIC_FALLBACK';
+  plan_origin?: 'MODEL_GENERATED' | 'TEST_SYNTHESIZED' | 'RECIPE_ADAPTED' | 'DETERMINISTIC_FALLBACK' | 'KNOWLEDGE_ADAPTED';
 }
 
 export interface MetricItem {

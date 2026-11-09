@@ -37,7 +37,13 @@ class ExperiencePlan(BaseModel):
     title: str
     subtitle: Optional[str] = None
     status: str = "ACTIVE"  # "ACTIVE", "COMPLETED", "FAILED"
-    plan_origin: Literal["MODEL_GENERATED", "RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK"] = "RECIPE_ADAPTED"
+    plan_origin: Literal[
+        "MODEL_GENERATED",
+        "TEST_SYNTHESIZED",
+        "RECIPE_ADAPTED",
+        "DETERMINISTIC_FALLBACK",
+        "KNOWLEDGE_ADAPTED",
+    ] = "RECIPE_ADAPTED"
     version: int = 1
     model_metadata: Dict[str, Any] = Field(default_factory=dict)
     components: List[ExperienceComponent] = Field(default_factory=list)
