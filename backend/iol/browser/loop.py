@@ -316,8 +316,47 @@ class BrowserInteractionLoop:
         # A. Try Model-Directed Selection if Provider Configured
         provider_info = self.model_gateway.get_configured_provider(context_metadata)
         if provider_info and provider_info.get("provider") not in ("mock", "test_mock"):
-            # Real LLM call for action selection
-            pass  # Fall back gracefully to deterministic goal-directed engine below
+            try:
+                elements_summary = [
+                    {
+                        "selector": el.get("selector"),
+                        "tag": el.get("tag"),
+                        "text": el.get("text", "")[:60],
+                        "input_type": el.get("input_type"),
+                    }
+                    for el in current_obs.accessible_elements[:15]
+                ]
+                sys_prompt = (
+                    "You are the IOL Autonomous Browser Controller.\n"
+                    "Select the single next best browser action to achieve the goal.\n"
+                    "Available action_types: CLICK, FILL, GOTO, EXTRACT, HANDOFF.\n"
+                    "Output strictly JSON: {'action_type': str, 'selector': str|null, 'text': str|null, 'rationale': str}"
+                )
+                usr_content = (
+                    f"Goal: {goal}\n"
+                    f"Current Page: {current_obs.title} ({current_obs.url})\n"
+                    f"Accessible Elements: {json.dumps(elements_summary)}\n"
+                )
+                call_res = await self.model_gateway.request_structured_completion(
+                    provider_info, sys_prompt, usr_content
+                )
+                if call_res:
+                    act_data, _, _, _, _ = call_res
+                    atype = act_data.get("action_type")
+                    if atype in BrowserActionType._value2member_map_:
+                        sel = act_data.get("selector")
+                        # Validate selector is in accessible elements if provided
+                        valid_selectors = {el.get("selector") for el in current_obs.accessible_elements if el.get("selector")}
+                        if not sel or sel in valid_selectors:
+                            return BrowserAction(
+                                action_type=BrowserActionType(atype),
+                                selector=sel,
+                                text=act_data.get("text"),
+                                value=act_data.get("text"),
+                                rationale=act_data.get("rationale") or "Model-directed action choice",
+                            )
+            except Exception:
+                pass  # Fall back gracefully to deterministic goal-directed engine below
 
         # B. Goal-Directed Semantic Selection
         goal_lower = goal.lower()

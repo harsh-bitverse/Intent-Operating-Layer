@@ -251,7 +251,7 @@ def test_model_directed_experience_generation_and_blocked_reporting():
     # 1. Blocked fallback when no provider credentials exist
     plan_blocked = experience_planner.plan_experience("task_blocked_test", "Compare Redis vs Memcached")
     assert plan_blocked.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
-    assert plan_blocked.model_metadata["status"] == "MODEL_GENERATION_BLOCKED"
+    assert plan_blocked.model_metadata["status"] in ("MODEL_GENERATION_BLOCKED", "REAL_MODEL_BLOCKED")
     assert "No active external LLM credentials configured" in plan_blocked.model_metadata["origin_reason"]
 
     # 2. Verified TEST_SYNTHESIZED synthesis when test provider is configured

@@ -196,23 +196,25 @@ async def test_real_http_model_provider_assigns_model_generated_and_actual_usage
         )
 
         assert plan is not None
-        # Strict provenance: Real network inference must yield MODEL_GENERATED
-        assert plan.plan_origin == "MODEL_GENERATED"
-        assert plan.plan_origin != "TEST_SYNTHESIZED"
+        # Strict provenance: Fake HTTP server is classified as TEST_SYNTHESIZED, never MODEL_GENERATED
+        assert plan.plan_origin == "TEST_SYNTHESIZED"
+        assert plan.plan_origin != "MODEL_GENERATED"
 
-        # Verify actual measured provider usage metrics
+        # Verify usage metadata marks simulated because runtime is an unverified local test server
         meta = plan.model_metadata
         assert meta["status"] == "SUCCESS"
         assert meta["provider"] == "openai_compatible"
         assert meta["model"] == "gpt-4o-mini-test"
-        assert meta["usage_type"] == "ACTUAL"
-        assert meta["is_estimated"] is False
-        assert meta["usage"]["usage_type"] == "ACTUAL"
-        assert meta["usage"]["is_estimated"] is False
+        assert meta["is_trusted_foundation_model"] is False
+        assert meta["usage_type"] == "SIMULATED"
+        assert meta["is_estimated"] is True
+        assert meta["usage"]["usage_type"] == "SIMULATED"
+        assert meta["usage"]["is_estimated"] is True
         assert meta["usage"]["prompt_tokens"] == 245
         assert meta["usage"]["completion_tokens"] == 310
         assert meta["usage"]["total_tokens"] == 555
         assert meta["latency_ms"] > 0
+        assert meta["transport_latency_ms"] >= 0
 
         # Validate generated plan against catalog schema
         is_valid, errors = experience_plan_validator.validate_plan(plan)
@@ -251,8 +253,8 @@ def test_unconfigured_credentials_reports_blocked_milestone_truthfully():
 
         assert plan.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
         assert plan.plan_origin not in ("MODEL_GENERATED", "TEST_SYNTHESIZED")
-        assert plan.model_metadata.get("status") == "MODEL_GENERATION_BLOCKED"
-        assert "No active external LLM credentials configured" in plan.model_metadata.get("origin_reason", "")
+        assert plan.model_metadata.get("status") in ("MODEL_GENERATION_BLOCKED", "REAL_MODEL_BLOCKED")
+        assert any(phrase in plan.model_metadata.get("origin_reason", "") for phrase in ["No active external LLM credentials configured", "To enable genuine model inference"])
         # No fake usage numbers
         assert "usage" not in plan.model_metadata or plan.model_metadata["usage"] == {}
 

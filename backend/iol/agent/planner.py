@@ -5,6 +5,7 @@ selects only necessary capabilities, validates parameters against capability con
 and produces validated execution plans with explicit execution path labeling.
 """
 
+import json
 import re
 import uuid
 from typing import Any, Dict, List, Optional
@@ -19,6 +20,8 @@ class AdaptiveCapabilityPlanner(BaseAgentAdapter):
     """
     Adaptive planner that dynamically composes capabilities based on user intent.
     Separates pure research tasks from outreach drafting and scheduling.
+    Supports genuine model-directed capability planning when configured,
+    falling back safely to deterministic contract-validated decomposition.
     """
 
     def __init__(self, registry: Optional[Any] = None):
@@ -27,12 +30,105 @@ class AdaptiveCapabilityPlanner(BaseAgentAdapter):
     def _get_registry(self):
         return self.registry if self.registry is not None else capability_registry
 
+    async def _plan_with_model(
+        self,
+        intent: str,
+        available_capabilities: List[CapabilityMetadata],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Optional[ExecutionPlan]:
+        """
+        Attempts model-directed capability selection and composition.
+        Reasons over intent constraints, capability contracts, and authorization policy.
+        Returns validated ExecutionPlan if successful, or None if unavailable/invalid.
+        """
+        try:
+            from backend.iol.experience.gateway import model_provider_gateway
+            provider_info = model_provider_gateway.get_configured_provider(context)
+            if not provider_info or provider_info.get("provider") in ("mock", "test_mock"):
+                return None
+
+            cap_summary = []
+            for c in available_capabilities:
+                cap_summary.append({
+                    "capability_id": c.capability_id,
+                    "description": c.description,
+                    "domain": c.domain,
+                    "consequential": getattr(c, "is_consequential", False),
+                })
+
+            system_prompt = (
+                "You are the Intent Operating Layer (IOL) Execution Planner.\n"
+                "Your job is to compose a sequence of capabilities to achieve the user's intent.\n"
+                "Available Capabilities:\n"
+                f"{json.dumps(cap_summary, indent=2)}\n\n"
+                "Rules:\n"
+                "1. ONLY select capability_ids from the available list.\n"
+                "2. Max 6 steps.\n"
+                "3. Consequential external mutations must be approved; you propose, deterministic policy enforces.\n"
+                "4. Output strictly valid JSON:\n"
+                "{\n"
+                "  'plan_id': string,\n"
+                "  'rationale': string,\n"
+                "  'steps': [\n"
+                "    {\n"
+                "      'step_id': string,\n"
+                "      'capability_id': string,\n"
+                "      'title': string,\n"
+                "      'description': string,\n"
+                "      'parameters': dict\n"
+                "    }\n"
+                "  ]\n"
+                "}"
+            )
+            user_content = f"Intent: {intent}\nContext: {json.dumps(context or {})}"
+
+            call_res = await model_provider_gateway.request_structured_completion(
+                provider_info, system_prompt, user_content
+            )
+            if not call_res:
+                return None
+
+            res_data, usage, transport_ms, inference_ms, req_id = call_res
+            steps_data = res_data.get("steps", [])
+            valid_cap_ids = {c.capability_id for c in available_capabilities}
+
+            validated_steps: List[PlanStep] = []
+            for s in steps_data:
+                cid = s.get("capability_id")
+                if cid in valid_cap_ids:
+                    validated_steps.append(
+                        PlanStep(
+                            step_id=s.get("step_id") or f"step_{uuid.uuid4().hex[:6]}",
+                            capability_id=cid,
+                            title=s.get("title", cid),
+                            description=s.get("description", ""),
+                            parameters=s.get("parameters", {}),
+                        )
+                    )
+
+            if not validated_steps:
+                return None
+
+            return ExecutionPlan(
+                plan_id=res_data.get("plan_id") or f"plan_model_{uuid.uuid4().hex[:8]}",
+                intent=intent,
+                rationale=res_data.get("rationale", "Model-directed capability plan."),
+                steps=validated_steps,
+            )
+        except Exception:
+            return None
+
     async def plan(
         self,
         intent: str,
         available_capabilities: List[CapabilityMetadata],
         context: Optional[Dict[str, Any]] = None
     ) -> ExecutionPlan:
+        # 0. Attempt Model-Directed Capability Planning if Provider Configured
+        model_plan = await self._plan_with_model(intent, available_capabilities, context)
+        if model_plan and len(model_plan.steps) > 0:
+            return model_plan
+
         cap_ids = {c.capability_id for c in available_capabilities}
         intent_lower = intent.lower()
 

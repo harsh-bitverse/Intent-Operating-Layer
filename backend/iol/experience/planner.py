@@ -150,15 +150,16 @@ class ExperiencePlanner:
         if provider_info:
             plan.model_metadata = {
                 "provider": provider_info.get("provider"),
-                "status": "MODEL_GENERATION_FAILED",
+                "status": "REAL_MODEL_FAILED",
                 "origin_reason": "Configured LLM inference failed or timed out; safely fell back to verified declarative layout template.",
                 "recipe_id": recipe.recipe_id
             }
         else:
             plan.model_metadata = {
                 "provider": None,
-                "status": "MODEL_GENERATION_BLOCKED",
-                "origin_reason": "No active external LLM credentials configured (OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, or OLLAMA_HOST missing); safely adapted verified declarative layout template.",
+                "status": "REAL_MODEL_BLOCKED",
+                "origin_reason": "No active external LLM credentials configured. To enable genuine model inference, configure GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, or start a local Ollama daemon.",
+                "user_setup_instruction": "Set environment variable in your terminal: $env:GEMINI_API_KEY='<your-api-key>' or $env:OPENAI_API_KEY='<your-api-key>' and restart the server.",
                 "recipe_id": recipe.recipe_id
             }
 

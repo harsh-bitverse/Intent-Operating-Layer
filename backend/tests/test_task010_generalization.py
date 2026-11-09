@@ -67,7 +67,7 @@ async def test_model_directed_generation_and_blocked_reporting():
 
     assert plan_unconfigured.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
     assert plan_unconfigured.plan_origin != "MODEL_GENERATED"
-    assert plan_unconfigured.model_metadata.get("status") == "MODEL_GENERATION_BLOCKED"
+    assert plan_unconfigured.model_metadata.get("status") in ("MODEL_GENERATION_BLOCKED", "REAL_MODEL_BLOCKED")
     assert "No active external LLM credentials configured" in plan_unconfigured.model_metadata.get("origin_reason", "")
 
 

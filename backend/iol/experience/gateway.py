@@ -116,6 +116,63 @@ class ModelProviderGateway:
 
         return None
 
+    def is_trusted_foundation_model_runtime(self, provider_info: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        Validates whether the provider runtime is an authentic, trusted foundation model.
+        A valid HTTP response alone is NOT proof of real model inference.
+        Local loopback servers (localhost/127.0.0.1) are classified as synthetic TEST_SYNTHESIZED
+        unless verified as a genuine, active local Ollama daemon with real model weights.
+        """
+        provider = (provider_info.get("provider") or "").lower()
+        base_url = (provider_info.get("base_url") or "").lower()
+        api_key = str(provider_info.get("api_key") or "")
+
+        # 1. Explicit mock or test providers
+        if provider in ("mock", "test_mock"):
+            return False, "Explicit test/mock provider"
+
+        if api_key in ("test_mock_key", "mock", "dummy", "test", "") or not api_key:
+            if provider != "ollama":
+                return False, "Placeholder or missing API key"
+
+        # 2. Local loopback / mock server detection
+        is_loopback = any(h in base_url for h in ["127.0.0.1", "localhost", "::1", "0.0.0.0"])
+
+        if is_loopback:
+            if provider == "ollama":
+                # Verify genuine Ollama health check
+                try:
+                    import urllib.request
+                    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                    v_url = f"{base_url.rstrip('/v1').rstrip('/')}/api/version"
+                    req = urllib.request.Request(v_url, headers={"User-Agent": "IOL-Validator/1.0"})
+                    with opener.open(req, timeout=1.0) as resp:
+                        if resp.status == 200:
+                            v_data = json.loads(resp.read().decode("utf-8"))
+                            if "version" in v_data:
+                                return True, f"Verified local Ollama runtime v{v_data['version']}"
+                except Exception:
+                    return False, "Local loopback is not an active, authentic Ollama daemon"
+            return False, f"Local loopback endpoint {base_url} is a synthetic test HTTP server, not a trusted foundation model"
+
+        # 3. Verified Cloud Foundation Model Providers
+        if provider in ("openai", "openai_compatible"):
+            if any(trusted in base_url for trusted in ["api.openai.com", "openai.azure.com"]):
+                return True, "Official OpenAI cloud runtime"
+            return False, f"Unverified custom OpenAI endpoint {base_url}"
+
+        if provider == "anthropic":
+            if "api.anthropic.com" in base_url:
+                return True, "Official Anthropic cloud runtime"
+            return False, f"Unverified custom Anthropic endpoint {base_url}"
+
+        if provider == "gemini":
+            if "generativelanguage.googleapis.com" in base_url:
+                return True, "Official Google Gemini cloud runtime"
+            return False, f"Unverified custom Gemini endpoint {base_url}"
+
+        return False, f"Unverified provider {provider} at {base_url}"
+
     async def generate_plan(
         self,
         task_id: str,
@@ -125,8 +182,9 @@ class ModelProviderGateway:
     ) -> Optional[ExperiencePlan]:
         """
         Attempts model-directed synthesis of an ExperiencePlan.
-        Returns a validated ExperiencePlan with plan_origin="MODEL_GENERATED" on success,
-        or None if no provider is configured or inference fails.
+        Returns a validated ExperiencePlan on success, or None if no provider is configured or inference fails.
+        Strictly enforces that MODEL_GENERATED requires authentic, trusted foundation model runtime.
+        Synthetic generators and fake HTTP servers are always assigned TEST_SYNTHESIZED.
         """
         provider_info = self.get_configured_provider(context_metadata)
         if not provider_info:
@@ -135,25 +193,33 @@ class ModelProviderGateway:
 
         t0 = time.perf_counter()
         try:
-            call_result = await self._call_provider(provider_info, intent, expected_shape)
+            call_result = await self._call_provider(provider_info, intent, expected_shape, context_metadata)
             if not call_result:
                 return None
 
-            raw_plan_dict, usage_info = call_result
+            raw_plan_dict, usage_info, transport_ms, inference_ms, request_id = call_result
 
             # Add required identifiers if missing
             raw_plan_dict["task_id"] = task_id
             if "plan_id" not in raw_plan_dict:
                 raw_plan_dict["plan_id"] = f"exp_model_{int(time.time())}"
             raw_plan_dict["status"] = "ACTIVE"
-            is_mock = provider_info.get("provider") in ("mock", "test_mock")
-            raw_plan_dict["plan_origin"] = "TEST_SYNTHESIZED" if is_mock else "MODEL_GENERATED"
             raw_plan_dict["version"] = 1
+
+            is_trusted, trust_reason = self.is_trusted_foundation_model_runtime(provider_info)
+
+            # Invariant: Never let provider response self-assert trusted provenance!
+            if is_trusted:
+                raw_plan_dict["plan_origin"] = "MODEL_GENERATED"
+                usage_type = "ACTUAL"
+                is_estimated = False
+            else:
+                raw_plan_dict["plan_origin"] = "TEST_SYNTHESIZED"
+                usage_type = "SIMULATED"
+                is_estimated = True
 
             latency_ms = round((time.perf_counter() - t0) * 1000, 2)
             usage_dict = dict(usage_info) if usage_info else {}
-            usage_type = "SIMULATED" if is_mock else "ACTUAL"
-            is_estimated = True if is_mock else False
             usage_dict["usage_type"] = usage_type
             usage_dict["is_estimated"] = is_estimated
 
@@ -162,9 +228,15 @@ class ModelProviderGateway:
                 "model": provider_info.get("model", "unknown"),
                 "status": "SUCCESS",
                 "latency_ms": latency_ms,
+                "transport_latency_ms": transport_ms,
+                "inference_latency_ms": inference_ms,
+                "request_id": request_id,
+                "is_trusted_foundation_model": is_trusted,
+                "trust_reason": trust_reason,
                 "usage": usage_dict,
                 "usage_type": usage_type,
                 "is_estimated": is_estimated,
+                "schema_validation": "PASSED",
                 "generated_at": datetime.now(timezone.utc).isoformat(),
             }
 
@@ -189,8 +261,13 @@ class ModelProviderGateway:
         provider_info: Dict[str, str],
         intent: str,
         expected_shape: str,
-    ) -> Optional[Tuple[Dict[str, Any], Dict[str, Any]]]:
+        context_metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Tuple[Dict[str, Any], Dict[str, Any], float, Optional[float], Optional[str]]]:
         """Makes an HTTP POST request to the provider endpoint with JSON schema output prompt."""
+        mode = (context_metadata or {}).get("mode", "FULL_WORKSPACE")
+        recipes = (context_metadata or {}).get("compatible_recipes", [])
+        interaction_needs = (context_metadata or {}).get("interaction_needs", [])
+
         system_prompt = (
             "You are the Intent Operating Layer Experience Planner. "
             "Your job is to generate a declarative JSON ExperiencePlan for a user intent.\n"
@@ -202,17 +279,36 @@ class ModelProviderGateway:
         user_content = (
             f"User Intent: {intent}\n"
             f"Expected Outcome Shape: {expected_shape}\n"
-            "Generate an optimal ExperiencePlan layout with appropriate metric_strip and data_grid/comparison_matrix."
+            f"Presentation Mode: {mode}\n"
+            f"Interaction Needs: {interaction_needs or 'Adaptive visual exploration, evidence inspection, stateful filtering'}\n"
+            f"Reference Patterns: {recipes or 'Standard IOL catalog layouts'}\n"
+            "Generate an optimal, verified ExperiencePlan layout strictly using approved catalog components."
         )
 
+        provider_type = provider_info.get("provider", "openai")
+        model = provider_info.get("model", "gpt-4o-mini")
+
+        # Test/Mock provider for verified offline integration testing
+        if provider_type in ("mock", "test_mock"):
+            p, u = self._mock_synthesize_plan(intent, expected_shape, model)
+            return p, u, 0.0, None, None
+
+        return await self.request_structured_completion(provider_info, system_prompt, user_content)
+
+    async def request_structured_completion(
+        self,
+        provider_info: Dict[str, Any],
+        system_prompt: str,
+        user_content: str,
+    ) -> Optional[Tuple[Dict[str, Any], Dict[str, Any], float, Optional[float], Optional[str]]]:
+        """
+        Generic structured JSON completion caller supporting OpenAI, Anthropic, and Gemini.
+        Returns (json_data, usage_dict, transport_latency_ms, inference_latency_ms, request_id)
+        """
         base_url = provider_info.get("base_url", "https://api.openai.com/v1").rstrip("/")
         api_key = provider_info.get("api_key", "")
         model = provider_info.get("model", "gpt-4o-mini")
         provider_type = provider_info.get("provider", "openai")
-
-        # Test/Mock provider for verified offline integration testing
-        if provider_type in ("mock", "test_mock"):
-            return self._mock_synthesize_plan(intent, expected_shape, model)
 
         import asyncio
         loop = asyncio.get_event_loop()
@@ -246,7 +342,11 @@ class ModelProviderGateway:
 
             def _do_anthropic():
                 opener = _get_opener()
+                t_start = time.perf_counter()
                 with opener.open(req, timeout=self.default_timeout_seconds) as resp:
+                    t_transport = round((time.perf_counter() - t_start) * 1000, 2)
+                    resp_headers = dict(resp.headers)
+                    req_id = resp_headers.get("x-request-id") or resp_headers.get("request-id")
                     res_data = json.loads(resp.read().decode("utf-8"))
                     text = res_data["content"][0]["text"].strip()
                     if text.startswith("```"):
@@ -256,9 +356,7 @@ class ModelProviderGateway:
                         "prompt_tokens": usage.get("input_tokens", 0),
                         "completion_tokens": usage.get("output_tokens", 0),
                         "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
-                        "usage_type": "ACTUAL",
-                        "is_estimated": False,
-                    }
+                    }, t_transport, None, req_id
 
             return await loop.run_in_executor(None, _do_anthropic)
 
@@ -286,7 +384,11 @@ class ModelProviderGateway:
 
             def _do_gemini():
                 opener = _get_opener()
+                t_start = time.perf_counter()
                 with opener.open(req, timeout=self.default_timeout_seconds) as resp:
+                    t_transport = round((time.perf_counter() - t_start) * 1000, 2)
+                    resp_headers = dict(resp.headers)
+                    req_id = resp_headers.get("x-goog-request-id") or resp_headers.get("request-id")
                     res_data = json.loads(resp.read().decode("utf-8"))
                     text = res_data["candidates"][0]["content"]["parts"][0]["text"].strip()
                     if text.startswith("```"):
@@ -296,9 +398,7 @@ class ModelProviderGateway:
                         "prompt_tokens": usage.get("promptTokenCount", 0),
                         "completion_tokens": usage.get("candidatesTokenCount", 0),
                         "total_tokens": usage.get("totalTokenCount", 0),
-                        "usage_type": "ACTUAL",
-                        "is_estimated": False,
-                    }
+                    }, t_transport, None, req_id
 
             return await loop.run_in_executor(None, _do_gemini)
 
@@ -329,19 +429,29 @@ class ModelProviderGateway:
 
             def _do_openai():
                 opener = _get_opener()
+                t_start = time.perf_counter()
                 with opener.open(req, timeout=self.default_timeout_seconds) as resp:
+                    t_transport = round((time.perf_counter() - t_start) * 1000, 2)
+                    resp_headers = dict(resp.headers)
+                    req_id = resp_headers.get("x-request-id") or resp_headers.get("request-id")
+                    inf_latency = None
+                    if "openai-processing-ms" in resp_headers:
+                        try:
+                            inf_latency = float(resp_headers["openai-processing-ms"])
+                        except Exception:
+                            pass
                     res_data = json.loads(resp.read().decode("utf-8"))
                     content = res_data["choices"][0]["message"]["content"].strip()
                     if content.startswith("```"):
                         content = content.split("\n", 1)[1].rsplit("```", 1)[0].strip()
+                    if not req_id and "id" in res_data:
+                        req_id = res_data["id"]
                     usage = res_data.get("usage", {})
                     return json.loads(content), {
                         "prompt_tokens": usage.get("prompt_tokens", 0),
                         "completion_tokens": usage.get("completion_tokens", 0),
                         "total_tokens": usage.get("total_tokens", 0),
-                        "usage_type": "ACTUAL",
-                        "is_estimated": False,
-                    }
+                    }, t_transport, inf_latency, req_id
 
             return await loop.run_in_executor(None, _do_openai)
 

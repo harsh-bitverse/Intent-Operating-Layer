@@ -108,7 +108,7 @@ async def test_unconfigured_model_generation_blocked_zero_false_claims():
 
         assert plan.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
         assert plan.plan_origin != "MODEL_GENERATED"
-        assert plan.model_metadata.get("status") in ("MODEL_GENERATION_BLOCKED", "KNOWLEDGE_TRANSFER_ADAPTED")
+        assert plan.model_metadata.get("status") in ("MODEL_GENERATION_BLOCKED", "REAL_MODEL_BLOCKED", "KNOWLEDGE_TRANSFER_ADAPTED")
 
     finally:
         for k, v in old_env.items():
