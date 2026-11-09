@@ -93,7 +93,7 @@ class ModelProviderGateway:
                 "provider": "gemini",
                 "api_key": os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"),
                 "base_url": "https://generativelanguage.googleapis.com/v1beta",
-                "model": os.environ.get("IOL_EXP_MODEL", "gemini-1.5-flash"),
+                "model": os.environ.get("IOL_EXP_MODEL", "gemini-2.5-flash"),
             }
 
         # 3. Check local Ollama or OpenAI-compatible local proxy

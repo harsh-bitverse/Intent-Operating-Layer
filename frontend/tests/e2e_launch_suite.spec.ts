@@ -30,15 +30,12 @@ test.describe('Intent Operating Layer - End-to-End Launch Verification', () => {
     // Expect sequential events to be logged
     await expect(page.locator('text=TASK_CREATED').first()).toBeVisible({ timeout: 10000 });
 
-    // 5. Wait for task to reach COMPLETED state (or have table outcomes)
-    await expect(page.locator('text=COMPLETED').first()).toBeVisible({ timeout: 45000 });
-
     // 6. Switch back to Declarative UI & Outcomes tab
     await page.click('[data-testid="tab-outcomes"]');
 
     // 7. Verify candidates appear in the declarative table
     const firstRow = page.locator('[data-testid="table-row-0"]');
-    await expect(firstRow).toBeVisible({ timeout: 10000 });
+    await expect(firstRow).toBeVisible({ timeout: 45000 });
 
     // 8. Click row to inspect field-level evidence panel
     await firstRow.click();

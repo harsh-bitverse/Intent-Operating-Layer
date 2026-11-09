@@ -72,3 +72,28 @@ async def test_worker_cancellation_during_execution(worker_setup):
     await worker.process_task(task.task_id)
     t = store.get_task(task.task_id)
     assert t.status == TaskStatus.CANCELLED
+
+
+@pytest.mark.asyncio
+async def test_worker_execution_continues_when_experience_inference_fails(worker_setup, monkeypatch):
+    """Verify Execution Engine continues independently if experience inference is slow, unavailable or invalid."""
+    worker, store = worker_setup
+    task = store.create_task(
+        intent="Research Stanford AI professors for Fall 2027",
+        budget=ExecutionBudget(max_duration_seconds=30, max_steps=10)
+    )
+
+    from backend.iol.experience import experience_planner
+
+    def mock_failing_plan_experience(*args, **kwargs):
+        raise RuntimeError("Simulated remote experience inference failure or timeout")
+
+    monkeypatch.setattr(experience_planner, "plan_experience", mock_failing_plan_experience)
+
+    # Process task directly through worker - must complete successfully
+    await worker.process_task(task.task_id)
+
+    completed_task = store.get_task(task.task_id)
+    assert completed_task.status == TaskStatus.COMPLETED
+    assert completed_task.current_step == completed_task.total_steps
+    assert completed_task.completed_at is not None

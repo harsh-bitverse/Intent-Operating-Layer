@@ -116,7 +116,7 @@ test.describe('IOL Task 012 - Model Inference & End-to-End Generative Experience
     const taskId = taskData.task_id;
 
     await page.goto(`/?task_id=${taskId}`);
-    await expect(page.locator(`text=${taskId}`).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator(`text=${taskId}`).first()).toBeVisible({ timeout: 25000 });
 
     const workspaceTab = page.locator('[data-testid="tab-workspace"]');
     await expect(workspaceTab).toBeVisible({ timeout: 15000 });

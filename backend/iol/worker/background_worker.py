@@ -222,15 +222,19 @@ class BackgroundWorker:
                 SourceMode.LIVE_BROWSER if is_browser else SourceMode.LIVE_API
             )
 
-            # 2c. Initialize Experience Engine Plan (concurrent with task start)
-            exp_plan = experience_planner.plan_experience(
-                task_id=task_id,
-                intent=task.intent,
-                context_metadata=task.metadata,
-                expected_shape=initial_shape.value
-            )
-            self.store.update_task_experience(task_id, exp_plan)
-            self.store.append_event(task_id, EventType.EXPERIENCE_UPDATED, exp_plan.model_dump())
+            # 2c. Initialize Experience Engine Plan (concurrent with task start, non-blocking)
+            exp_plan = None
+            try:
+                exp_plan = experience_planner.plan_experience(
+                    task_id=task_id,
+                    intent=task.intent,
+                    context_metadata=task.metadata,
+                    expected_shape=initial_shape.value
+                )
+                self.store.update_task_experience(task_id, exp_plan)
+                self.store.append_event(task_id, EventType.EXPERIENCE_UPDATED, exp_plan.model_dump())
+            except Exception as e:
+                logger.warning(f"Experience planning non-blocking fallback for task {task_id}: {e}")
 
             outcome_env = OutcomeEnvelopeV1(
                 shape=initial_shape,

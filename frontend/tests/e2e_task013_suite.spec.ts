@@ -59,15 +59,24 @@ test.describe('IOL Task 013 - Genuine Model Intelligence & Generalization Suite'
     const taskData = await res.json();
     const taskId = taskData.task_id;
 
-    // Fetch the task experience plan via API to verify truthful REAL_MODEL_BLOCKED status
-    const planRes = await page.request.get(`http://127.0.0.1:8000/api/tasks/${taskId}/experience`, {
-      headers: {
-        'X-API-Key': 'iol_demo_operator_key',
-      },
-    });
-    expect(planRes.ok()).toBeTruthy();
-    const planData = await planRes.json();
-    const expPlan = planData.experience_plan;
+    // Poll for the task experience plan via API to verify truthful REAL_MODEL_BLOCKED status
+    let expPlan = null;
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const planRes = await page.request.get(`http://127.0.0.1:8000/api/tasks/${taskId}/experience`, {
+        headers: {
+          'X-API-Key': 'iol_demo_operator_key',
+        },
+      });
+      if (planRes.ok()) {
+        const planData = await planRes.json();
+        if (planData.experience_plan) {
+          expPlan = planData.experience_plan;
+          break;
+        }
+      }
+      await page.waitForTimeout(300);
+    }
+    expect(expPlan).not.toBeNull();
     
     // Ensure origin is truthful fallback and model_metadata records REAL_MODEL_BLOCKED
     expect(expPlan.plan_origin).toBe('RECIPE_ADAPTED');
