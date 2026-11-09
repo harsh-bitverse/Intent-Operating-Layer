@@ -4,6 +4,9 @@ Configures middleware, routes, lifecycle handlers, and capability registrations.
 """
 
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

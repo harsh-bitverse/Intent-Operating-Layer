@@ -71,6 +71,13 @@ class ModelProviderGateway:
                 "model": meta.get("model_name", "iol-test-synthesizer-v1"),
             }
 
+        # 1. Attempt to load from .env file if available
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except Exception:
+            pass
+
         # 2. Check environment variables
         if os.environ.get("OPENAI_API_KEY"):
             return {
