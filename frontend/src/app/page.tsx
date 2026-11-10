@@ -36,7 +36,7 @@ export default function Home() {
   const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
   const [capabilities, setCapabilities] = useState<CapabilityMetadata[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [backendOnline, setBackendOnline] = useState(false);
+  const [backendOnline, setBackendOnline] = useState(true);
   const [selectedApiKey, setSelectedApiKey] = useState('iol_demo_operator_key');
   const [customKey, setCustomKey] = useState('');
   const [showCustomKeyInput, setShowCustomKeyInput] = useState(false);
@@ -78,23 +78,38 @@ export default function Home() {
 
   // 1. Fetch initial tasks and capabilities scoped to authenticated user
   const refreshData = async () => {
+    // 1. Health check
     try {
-      // Check health
       const healthRes = await fetch(`${API_URL}/api/health`);
       if (healthRes.ok) {
         setBackendOnline(true);
+      } else {
+        setBackendOnline(false);
       }
+    } catch (_) {
+      setBackendOnline(false);
+    }
 
-      // Fetch tasks scoped by X-API-Key
-      const tasksRes = await fetch(`${API_URL}/api/tasks?limit=25`, {
+    // 2. Fetch tasks scoped by X-API-Key
+    try {
+      const tasksRes = await fetch(`${API_URL}/api/tasks?limit=100`, {
         headers: getHeaders(),
       });
       if (tasksRes.ok) {
-        const data: Task[] = await tasksRes.json();
+        let data: Task[] = await tasksRes.json();
+        const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+        const qTaskId = urlParams?.get('task_id');
+        if (qTaskId && !data.some((t) => t.task_id === qTaskId)) {
+          try {
+            const singleRes = await fetch(`${API_URL}/api/tasks/${qTaskId}`, { headers: getHeaders() });
+            if (singleRes.ok) {
+              const singleTask: Task = await singleRes.json();
+              data = [singleTask, ...data];
+            }
+          } catch (_) {}
+        }
         setTasks(data);
         if (data.length > 0 && !activeTaskIdRef.current) {
-          const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-          const qTaskId = urlParams?.get('task_id');
           if (qTaskId && data.some((t) => t.task_id === qTaskId)) {
             setActiveTaskId(qTaskId);
           } else if (!qTaskId) {
@@ -104,15 +119,19 @@ export default function Home() {
           setActiveTaskId(null);
         }
       }
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+    }
 
-      // Fetch capabilities
+    // 3. Fetch capabilities
+    try {
       const capsRes = await fetch(`${API_URL}/api/capabilities`);
       if (capsRes.ok) {
         const capsData = await capsRes.json();
         setCapabilities(capsData);
       }
     } catch (err) {
-      setBackendOnline(false);
+      console.error('Failed to fetch capabilities:', err);
     }
   };
 
@@ -178,7 +197,7 @@ export default function Home() {
 
           <div className="flex items-center space-x-3 text-xs">
             {/* Health Indicator */}
-            <div className="hidden md:flex items-center space-x-2 bg-slate-900 px-2.5 py-1 rounded-full border border-slate-800">
+            <div className="flex items-center space-x-2 bg-slate-900 px-2.5 py-1 rounded-full border border-slate-800">
               <span className={`h-2 w-2 rounded-full ${backendOnline ? 'bg-emerald-400 animate-pulse' : 'bg-red-500'}`} />
               <span className="text-slate-400 font-mono text-[11px]">
                 {backendOnline ? 'Core Online' : 'Core Offline'}

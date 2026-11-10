@@ -255,7 +255,7 @@ export const TaskView: React.FC<TaskViewProps> = ({
       <div className="flex h-64 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/60 p-8 shadow-inner">
         <div className="flex items-center space-x-3 text-slate-400">
           <span className="h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
-          <span className="text-sm font-medium">Retrieving persistent task state from store...</span>
+          <span className="text-sm font-medium">Retrieving persistent task <code className="font-mono text-blue-400">{taskId}</code> state from store...</span>
         </div>
       </div>
     );

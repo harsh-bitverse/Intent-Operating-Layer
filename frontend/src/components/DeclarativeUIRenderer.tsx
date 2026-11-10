@@ -222,7 +222,7 @@ const SafeTable: React.FC<{ table: TableComponent }> = ({ table }) => {
               </tr>
             ) : (
               table.rows.map((row, rIdx) => {
-                const hasEvidence = !!row._field_evidence;
+                const hasEvidence = true;
                 const isExpanded = !!expandedRows[rIdx];
 
                 return (

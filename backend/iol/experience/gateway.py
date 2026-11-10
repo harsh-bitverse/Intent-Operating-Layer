@@ -20,6 +20,12 @@ from backend.iol.experience.validator import experience_plan_validator
 
 logger = logging.getLogger("iol.experience.gateway")
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 CATALOG_SCHEMA_SUMMARY = """
 Allowed component types and required prop structure:
 1. workspace_layout: { "layout": "grid" | "stacked" | "split" }
@@ -71,12 +77,7 @@ class ModelProviderGateway:
                 "model": meta.get("model_name", "iol-test-synthesizer-v1"),
             }
 
-        # 1. Attempt to load from .env file if available
-        try:
-            from dotenv import load_dotenv
-            load_dotenv()
-        except Exception:
-            pass
+
 
         # 2. Check environment variables
         if os.environ.get("OPENAI_API_KEY"):
@@ -385,7 +386,10 @@ class ModelProviderGateway:
             req = urllib.request.Request(
                 endpoint,
                 data=json.dumps(payload).encode("utf-8"),
-                headers={"Content-Type": "application/json"},
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": api_key,
+                },
                 method="POST"
             )
 

@@ -4,6 +4,7 @@ Verifies recipe matching, plan generation, progressive data binding,
 and mathematical neural network simulation capability.
 """
 
+import os
 import pytest
 import asyncio
 from backend.iol.experience.models import ExperienceMode, ExperiencePlan
@@ -249,10 +250,17 @@ def test_bind_outcome_to_plan_monotonic():
 def test_model_directed_experience_generation_and_blocked_reporting():
     """Verify Phase 1: MODEL_GENERATED plan synthesis, provenance tokens, and MODEL_GENERATION_BLOCKED fallback."""
     # 1. Blocked fallback when no provider credentials exist
-    plan_blocked = experience_planner.plan_experience("task_blocked_test", "Compare Redis vs Memcached")
-    assert plan_blocked.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
-    assert plan_blocked.model_metadata["status"] in ("MODEL_GENERATION_BLOCKED", "REAL_MODEL_BLOCKED")
-    assert "No active external LLM credentials configured" in plan_blocked.model_metadata["origin_reason"]
+    clean_keys = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY", "OLLAMA_HOST", "IOL_TEST_MODEL_PROVIDER"]
+    old_env = {k: os.environ.pop(k, None) for k in clean_keys}
+    try:
+        plan_blocked = experience_planner.plan_experience("task_blocked_test", "Compare Redis vs Memcached")
+        assert plan_blocked.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
+        assert plan_blocked.model_metadata["status"] in ("MODEL_GENERATION_BLOCKED", "REAL_MODEL_BLOCKED")
+        assert "No active external LLM credentials configured" in plan_blocked.model_metadata["origin_reason"]
+    finally:
+        for k, v in old_env.items():
+            if v is not None:
+                os.environ[k] = v
 
     # 2. Verified TEST_SYNTHESIZED synthesis when test provider is configured
     plan_model = experience_planner.plan_experience(

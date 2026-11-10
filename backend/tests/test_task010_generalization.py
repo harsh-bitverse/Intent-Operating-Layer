@@ -8,6 +8,7 @@ Validates:
 5. Everyday-task readiness (flight route & schedule specifications with honest portal handoff and zero fake bookings).
 """
 
+import os
 import pytest
 from backend.iol.agent.planner import AdaptiveCapabilityPlanner
 from backend.iol.browser.loop import browser_interaction_loop, BrowserLoopResult
@@ -59,16 +60,23 @@ async def test_model_directed_generation_and_blocked_reporting():
     assert len(plan_model.components) >= 2
 
     # 2. No provider configured -> Explicit MODEL_GENERATION_BLOCKED without mislabeling
-    plan_unconfigured = experience_planner.plan_experience(
-        task_id="task_probe_m2",
-        intent="Research cutting-edge AI infrastructure startups in Bengaluru",
-        context_metadata={}
-    )
+    clean_keys = ["OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY", "OLLAMA_HOST", "IOL_TEST_MODEL_PROVIDER"]
+    old_env = {k: os.environ.pop(k, None) for k in clean_keys}
+    try:
+        plan_unconfigured = experience_planner.plan_experience(
+            task_id="task_probe_m2",
+            intent="Research cutting-edge AI infrastructure startups in Bengaluru",
+            context_metadata={}
+        )
 
-    assert plan_unconfigured.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
-    assert plan_unconfigured.plan_origin != "MODEL_GENERATED"
-    assert plan_unconfigured.model_metadata.get("status") in ("MODEL_GENERATION_BLOCKED", "REAL_MODEL_BLOCKED")
-    assert "No active external LLM credentials configured" in plan_unconfigured.model_metadata.get("origin_reason", "")
+        assert plan_unconfigured.plan_origin in ("RECIPE_ADAPTED", "DETERMINISTIC_FALLBACK")
+        assert plan_unconfigured.plan_origin != "MODEL_GENERATED"
+        assert plan_unconfigured.model_metadata.get("status") in ("MODEL_GENERATION_BLOCKED", "REAL_MODEL_BLOCKED")
+        assert "No active external LLM credentials configured" in plan_unconfigured.model_metadata.get("origin_reason", "")
+    finally:
+        for k, v in old_env.items():
+            if v is not None:
+                os.environ[k] = v
 
 
 @pytest.mark.asyncio
