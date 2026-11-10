@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { IntentInput } from '../components/IntentInput';
 import { TaskView } from '../components/TaskView';
+import { ModelSettingsModal } from '../components/ModelSettingsModal';
 import { CapabilityMetadata, Task } from '../types/iol';
 
 const PRESET_ACCOUNTS = [
@@ -40,6 +41,7 @@ export default function Home() {
   const [selectedApiKey, setSelectedApiKey] = useState('iol_demo_operator_key');
   const [customKey, setCustomKey] = useState('');
   const [showCustomKeyInput, setShowCustomKeyInput] = useState(false);
+  const [showModelSettings, setShowModelSettings] = useState(false);
 
   const activeTaskIdRef = useRef<string | null>(null);
   activeTaskIdRef.current = activeTaskId;
@@ -242,6 +244,17 @@ export default function Home() {
             <div className="hidden lg:flex items-center rounded-full bg-slate-900 border border-slate-800 px-3 py-1 text-xs text-slate-300">
               <span className="font-semibold text-blue-400 mr-1">{capabilities.length}</span> Capabilities
             </div>
+
+            <button
+              onClick={() => setShowModelSettings(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 rounded-lg text-xs text-slate-200 transition"
+              title="Configure foundation model runtimes, local Ollama models, and functional routing"
+            >
+              <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Model Runtimes</span>
+            </button>
           </div>
         </div>
       </header>
@@ -411,6 +424,14 @@ export default function Home() {
       <footer className="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
         Intent Operating Layer (IOL) — Principle: Primary: Complete work. Secondary: Learn reusable capabilities.
       </footer>
+
+      {/* Model Providers and Intelligent Routing Modal */}
+      <ModelSettingsModal
+        isOpen={showModelSettings}
+        onClose={() => setShowModelSettings(false)}
+        apiUrl={API_URL}
+        headers={getHeaders()}
+      />
     </div>
   );
 }

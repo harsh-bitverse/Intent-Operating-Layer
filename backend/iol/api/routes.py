@@ -21,8 +21,10 @@ from backend.iol.core.replay_bundle import create_replay_bundle
 from backend.iol.browser.models import BrowserActionEffect
 from pydantic import BaseModel
 from backend.iol.worker.background_worker import background_worker
+from backend.iol.api.model_routes import model_api_router
 
 api_router = APIRouter(prefix="/api")
+api_router.include_router(model_api_router)
 
 
 # ------------------------------------------------------------------------------
